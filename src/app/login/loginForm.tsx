@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
 
-// Converts a local Nigerian number (e.g. 08012345678) to E.164 format (+2348012345678)
 function toE164(rawPhone: string): string {
   const digits = rawPhone.replace(/\D/g, '');
   if (digits.startsWith('234')) return `+${digits}`;
@@ -16,69 +15,56 @@ export default function LoginForm() {
   const searchParams = useSearchParams();
   const locationId = searchParams.get('location');
 
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
+  const [mode, setMode] = useState<'login' | 'signup'>('signup');
   const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  async function sendOtp() {
-    setError('');
-    if (phone.replace(/\D/g, '').length < 10) {
-      setError('Enter a valid phone number.');
-      return;
-    }
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({
-      phone: toE164(phone),
-    });
-    setLoading(false);
-    if (error) {
-      setError(error.message);
-      return;
-    }
-    setStep('otp');
+  function redirectAfterAuth() {
+    router.push(locationId ? `/?location=${locationId}` : '/');
   }
 
-  async function verifyOtp() {
+  async function handleSignup() {
     setError('');
-    if (otp.length < 4) {
-      setError('Enter the code sent to your phone.');
-      return;
-    }
-    setLoading(true);
+    if (phone.replace(/\D/g, '').length < 10) return setError('Enter a valid phone number.');
+    if (password.length < 6) return setError('Password must be at least 6 characters.');
 
-    const { data, error } = await supabase.auth.verifyOtp({
-      phone: toE164(phone),
-      token: otp,
-      type: 'sms',
+    setLoading(true);
+    const e164Phone = toE164(phone);
+
+    const { data, error } = await supabase.auth.signUp({
+      phone: e164Phone,
+      password,
     });
 
     if (error || !data.user) {
       setLoading(false);
-      setError(error?.message || 'Verification failed. Try again.');
+      setError(error?.message || 'Could not create account.');
       return;
     }
 
-    // Ensure a matching row exists in our own `users` table.
-    // id here MUST equal the Supabase Auth user id for RLS to work.
+    // Mirror the auth user into our own `users` table (id MUST match for RLS)
     const { error: upsertError } = await supabase
       .from('users')
-      .upsert(
-        { id: data.user.id, phone: toE164(phone) },
-        { onConflict: 'id', ignoreDuplicates: false }
-      );
+      .upsert({ id: data.user.id, phone: e164Phone }, { onConflict: 'id' });
 
     setLoading(false);
+    if (upsertError) return setError(upsertError.message);
 
-    if (upsertError) {
-      setError(upsertError.message);
-      return;
-    }
+    redirectAfterAuth();
+  }
 
-    // Send the customer back to the rental page, preserving the location they scanned
-    const redirectUrl = locationId ? `/?location=${locationId}` : '/';
-    router.push(redirectUrl);
+  async function handleLogin() {
+    setError('');
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      phone: toE164(phone),
+      password,
+    });
+    setLoading(false);
+    if (error) return setError('Incorrect phone or password.');
+    redirectAfterAuth();
   }
 
   return (
@@ -87,60 +73,49 @@ export default function LoginForm() {
         <div className="text-center">
           <h1 className="text-3xl font-extrabold text-blue-600 mb-2">OKcharge</h1>
           <p className="text-gray-500 font-medium">
-            {step === 'phone' ? 'Verify your phone to continue' : 'Enter the code we sent you'}
+            {mode === 'signup' ? 'Create your account' : 'Welcome back'}
           </p>
         </div>
 
-        {step === 'phone' && (
-          <div className="space-y-4">
-            <label className="block text-sm font-bold text-gray-700">Phone Number</label>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Phone Number</label>
             <input
               type="tel"
               placeholder="e.g. 08012345678"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-0 focus:border-blue-600 outline-none text-lg"
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-600 outline-none text-lg"
             />
-            <button
-              onClick={sendOtp}
-              disabled={loading}
-              className="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-xl hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
-            >
-              {loading ? 'Sending…' : 'Send Code'}
-            </button>
           </div>
-        )}
-
-        {step === 'otp' && (
-          <div className="space-y-4">
-            <label className="block text-sm font-bold text-gray-700">Verification Code</label>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Password</label>
             <input
-              type="text"
-              inputMode="numeric"
-              placeholder="123456"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-0 focus:border-blue-600 outline-none text-lg tracking-widest text-center"
+              type="password"
+              placeholder="At least 6 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-600 outline-none text-lg"
             />
-            <button
-              onClick={verifyOtp}
-              disabled={loading}
-              className="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-xl hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
-            >
-              {loading ? 'Verifying…' : 'Verify & Continue'}
-            </button>
-            <button
-              onClick={() => setStep('phone')}
-              className="w-full text-sm text-gray-400 hover:text-gray-600"
-            >
-              Wrong number? Go back
-            </button>
           </div>
-        )}
 
-        {error && (
-          <p className="text-sm text-red-600 text-center font-medium">{error}</p>
-        )}
+          <button
+            onClick={mode === 'signup' ? handleSignup : handleLogin}
+            disabled={loading}
+            className="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-xl hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {loading ? 'Please wait…' : mode === 'signup' ? 'Create Account' : 'Log In'}
+          </button>
+
+          <button
+            onClick={() => { setMode(mode === 'signup' ? 'login' : 'signup'); setError(''); }}
+            className="w-full text-sm text-gray-400 hover:text-gray-600"
+          >
+            {mode === 'signup' ? 'Already have an account? Log in' : "New here? Create an account"}
+          </button>
+        </div>
+
+        {error && <p className="text-sm text-red-600 text-center font-medium">{error}</p>}
       </div>
     </main>
   );
