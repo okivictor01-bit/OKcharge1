@@ -17,6 +17,7 @@ export default function OwnerDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
+  // Handover state
   const [inputMode, setInputMode] = useState<'camera' | 'manual'>('manual');
   const [scanning, setScanning] = useState(false);
   const [scannedCode, setScannedCode] = useState('');
@@ -24,6 +25,11 @@ export default function OwnerDashboard() {
   const [ticketCode, setTicketCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Return state
+  const [returnCode, setReturnCode] = useState('');
+  const [returning, setReturning] = useState(false);
+  const [returnMessage, setReturnMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const [activeRentals, setActiveRentals] = useState<ActiveRental[]>([]);
   const scannerInstance = useRef<any>(null);
@@ -79,9 +85,7 @@ export default function OwnerDashboard() {
           setScanning(false);
           scanner.clear().catch(() => {});
         },
-        () => {
-          // ignore per-frame scan misses
-        }
+        () => {}
       );
     });
 
@@ -138,6 +142,42 @@ export default function OwnerDashboard() {
     loadActiveRentals();
   }
 
+  async function handleProcessReturn() {
+    setReturnMessage(null);
+    if (!returnCode.trim()) {
+      setReturnMessage({ type: 'error', text: 'Enter the powerbank code.' });
+      return;
+    }
+
+    setReturning(true);
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+
+    const { data, error } = await supabase.functions.invoke('process-return', {
+      body: { powerbank_qr_code: returnCode.trim() },
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    setReturning(false);
+
+    if (error || data?.error) {
+      setReturnMessage({ type: 'error', text: data?.error || error?.message || 'Return processing failed.' });
+      return;
+    }
+
+    if (data.late_fee > 0) {
+      const chargeNote = data.charge_succeeded
+        ? `Late fee of ₦${data.late_fee} charged successfully.`
+        : `Late fee of ₦${data.late_fee} could NOT be charged — customer account suspended with outstanding debt.`;
+      setReturnMessage({ type: data.charge_succeeded ? 'success' : 'error', text: `Return processed. ${chargeNote}` });
+    } else {
+      setReturnMessage({ type: 'success', text: 'Return processed on time — no late fee.' });
+    }
+
+    setReturnCode('');
+    loadActiveRentals();
+  }
+
   function formatCountdown(expectedReturn: string): string {
     const diffMs = new Date(expectedReturn).getTime() - Date.now();
     if (diffMs <= 0) return 'Overdue';
@@ -168,17 +208,13 @@ export default function OwnerDashboard() {
           <div className="flex rounded-xl overflow-hidden border-2 border-gray-200">
             <button
               onClick={() => { setInputMode('camera'); setScanning(false); }}
-              className={`flex-1 py-2 text-sm font-bold ${
-                inputMode === 'camera' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500'
-              }`}
+              className={`flex-1 py-2 text-sm font-bold ${inputMode === 'camera' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500'}`}
             >
               Scan QR
             </button>
             <button
               onClick={() => { setInputMode('manual'); setScanning(false); }}
-              className={`flex-1 py-2 text-sm font-bold ${
-                inputMode === 'manual' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500'
-              }`}
+              className={`flex-1 py-2 text-sm font-bold ${inputMode === 'manual' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500'}`}
             >
               Type Code
             </button>
@@ -186,17 +222,12 @@ export default function OwnerDashboard() {
         )}
 
         {!scannedCode && inputMode === 'camera' && !scanning && (
-          <button
-            onClick={() => setScanning(true)}
-            className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl"
-          >
+          <button onClick={() => setScanning(true)} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl">
             Start Camera Scan
           </button>
         )}
 
-        {!scannedCode && inputMode === 'camera' && scanning && (
-          <div id="qr-reader" className="w-full" />
-        )}
+        {!scannedCode && inputMode === 'camera' && scanning && <div id="qr-reader" className="w-full" />}
 
         {!scannedCode && inputMode === 'manual' && (
           <div className="space-y-2">
@@ -209,28 +240,18 @@ export default function OwnerDashboard() {
                 onChange={(e) => setManualCode(e.target.value)}
                 className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-600 outline-none text-lg"
               />
-              <button
-                onClick={handleUseManualCode}
-                className="px-4 bg-gray-800 text-white font-bold rounded-xl"
-              >
+              <button onClick={handleUseManualCode} className="px-4 bg-gray-800 text-white font-bold rounded-xl">
                 Use
               </button>
             </div>
-            <p className="text-xs text-gray-400">
-              Temporary fallback until printed QR codes are available.
-            </p>
+            <p className="text-xs text-gray-400">Temporary fallback until printed QR codes are available.</p>
           </div>
         )}
 
         {scannedCode && (
           <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-            <p className="text-sm text-green-700 font-semibold break-all">
-              Powerbank: {scannedCode}
-            </p>
-            <button
-              onClick={handleResetPowerbankCode}
-              className="text-xs text-gray-400 hover:text-gray-600 ml-2 shrink-0"
-            >
+            <p className="text-sm text-green-700 font-semibold break-all">Powerbank: {scannedCode}</p>
+            <button onClick={handleResetPowerbankCode} className="text-xs text-gray-400 hover:text-gray-600 ml-2 shrink-0">
               Change
             </button>
           </div>
@@ -262,11 +283,35 @@ export default function OwnerDashboard() {
         )}
       </div>
 
+      <div className="bg-white rounded-2xl shadow-xl p-6 space-y-4">
+        <h2 className="font-bold text-gray-700">Process Return</h2>
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-1">Powerbank Code</label>
+          <input
+            type="text"
+            placeholder="e.g. PB-TEST-001"
+            value={returnCode}
+            onChange={(e) => setReturnCode(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-600 outline-none text-lg"
+          />
+        </div>
+        <button
+          onClick={handleProcessReturn}
+          disabled={returning}
+          className="w-full bg-orange-600 text-white font-bold py-3 rounded-xl disabled:opacity-50"
+        >
+          {returning ? 'Processing…' : 'Mark as Returned'}
+        </button>
+        {returnMessage && (
+          <p className={`text-sm text-center font-medium ${returnMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+            {returnMessage.text}
+          </p>
+        )}
+      </div>
+
       <div className="bg-white rounded-2xl shadow-xl p-6 space-y-3">
         <h2 className="font-bold text-gray-700">Active Rentals</h2>
-        {activeRentals.length === 0 && (
-          <p className="text-sm text-gray-400">No active rentals right now.</p>
-        )}
+        {activeRentals.length === 0 && <p className="text-sm text-gray-400">No active rentals right now.</p>}
         {activeRentals.map((r) => (
           <div key={r.id} className="flex justify-between items-center border-b border-gray-100 pb-2">
             <span className="text-sm text-gray-600">{r.duration_hours}h rental</span>
