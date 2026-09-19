@@ -26,8 +26,8 @@ export default function RentalForm() {
   const [duration, setDuration] = useState(1);
   const [name, setName] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [payError, setPayError] = useState('');
 
-  // Check whether the customer is already logged in
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user ?? null);
@@ -41,7 +41,6 @@ export default function RentalForm() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // Look up the scanned location in the database
   useEffect(() => {
     if (!locationCode) {
       setLoadingLocation(false);
@@ -63,7 +62,7 @@ export default function RentalForm() {
       });
   }, [locationCode]);
 
-  function handlePayClick() {
+  async function handlePayClick() {
     if (!locationCode || !location) return;
 
     if (!user) {
@@ -72,16 +71,33 @@ export default function RentalForm() {
     }
 
     if (!name.trim()) {
-      alert('Please enter your name.');
+      setPayError('Please enter your name.');
       return;
     }
 
+    setPayError('');
     setSubmitting(true);
-    // Placeholder — next step wires this into real Paystack checkout
-    alert(
-      `Ready for Paystack: ${duration}h at "${location.name}" (location id: ${location.id}) for user ${user.id}`
-    );
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+
+    const { data, error } = await supabase.functions.invoke('initialize-payment', {
+      body: {
+        location_id: location.id,
+        duration_hours: duration,
+        customer_name: name.trim(),
+      },
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
     setSubmitting(false);
+
+    if (error || !data?.authorization_url) {
+      setPayError(data?.error || error?.message || 'Could not start payment. Try again.');
+      return;
+    }
+
+    window.location.href = data.authorization_url;
   }
 
   if (!locationCode) {
@@ -174,8 +190,12 @@ export default function RentalForm() {
           disabled={submitting}
           className="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-xl mt-4 hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-500/30 disabled:opacity-50"
         >
-          {user ? 'Pay & Rent Now' : 'Continue to Login'}
+          {submitting ? 'Please wait…' : user ? 'Pay & Rent Now' : 'Continue to Login'}
         </button>
+
+        {payError && (
+          <p className="text-sm text-red-600 text-center font-medium">{payError}</p>
+        )}
 
         <p className="text-xs text-center text-gray-400 mt-4 leading-relaxed">
           By continuing, you agree to authorize a saved payment method. Unreturned powerbanks incur a flat ₦15,000 penalty.
