@@ -17,8 +17,10 @@ export default function OwnerDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
+  const [inputMode, setInputMode] = useState<'camera' | 'manual'>('manual');
   const [scanning, setScanning] = useState(false);
   const [scannedCode, setScannedCode] = useState('');
+  const [manualCode, setManualCode] = useState('');
   const [ticketCode, setTicketCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -89,10 +91,21 @@ export default function OwnerDashboard() {
     };
   }, [scanning]);
 
+  function handleUseManualCode() {
+    if (!manualCode.trim()) return;
+    setScannedCode(manualCode.trim());
+    setManualCode('');
+  }
+
+  function handleResetPowerbankCode() {
+    setScannedCode('');
+    setManualCode('');
+  }
+
   async function handleSubmitHandover() {
     setMessage(null);
     if (!scannedCode) {
-      setMessage({ type: 'error', text: 'Scan a powerbank QR code first.' });
+      setMessage({ type: 'error', text: 'Enter or scan a powerbank code first.' });
       return;
     }
     if (!ticketCode.trim()) {
@@ -151,21 +164,76 @@ export default function OwnerDashboard() {
       <div className="bg-white rounded-2xl shadow-xl p-6 space-y-4">
         <h2 className="font-bold text-gray-700">Hand Over Powerbank</h2>
 
-        {!scanning && !scannedCode && (
+        {!scannedCode && (
+          <div className="flex rounded-xl overflow-hidden border-2 border-gray-200">
+            <button
+              onClick={() => { setInputMode('camera'); setScanning(false); }}
+              className={`flex-1 py-2 text-sm font-bold ${
+                inputMode === 'camera' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500'
+              }`}
+            >
+              Scan QR
+            </button>
+            <button
+              onClick={() => { setInputMode('manual'); setScanning(false); }}
+              className={`flex-1 py-2 text-sm font-bold ${
+                inputMode === 'manual' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500'
+              }`}
+            >
+              Type Code
+            </button>
+          </div>
+        )}
+
+        {!scannedCode && inputMode === 'camera' && !scanning && (
           <button
             onClick={() => setScanning(true)}
             className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl"
           >
-            Scan Powerbank QR
+            Start Camera Scan
           </button>
         )}
 
-        {scanning && <div id="qr-reader" className="w-full" />}
+        {!scannedCode && inputMode === 'camera' && scanning && (
+          <div id="qr-reader" className="w-full" />
+        )}
+
+        {!scannedCode && inputMode === 'manual' && (
+          <div className="space-y-2">
+            <label className="block text-sm font-bold text-gray-700">Powerbank Code</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="e.g. PB-TEST-001"
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value)}
+                className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-600 outline-none text-lg"
+              />
+              <button
+                onClick={handleUseManualCode}
+                className="px-4 bg-gray-800 text-white font-bold rounded-xl"
+              >
+                Use
+              </button>
+            </div>
+            <p className="text-xs text-gray-400">
+              Temporary fallback until printed QR codes are available.
+            </p>
+          </div>
+        )}
 
         {scannedCode && (
-          <p className="text-sm text-green-600 font-semibold break-all">
-            Scanned: {scannedCode}
-          </p>
+          <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+            <p className="text-sm text-green-700 font-semibold break-all">
+              Powerbank: {scannedCode}
+            </p>
+            <button
+              onClick={handleResetPowerbankCode}
+              className="text-xs text-gray-400 hover:text-gray-600 ml-2 shrink-0"
+            >
+              Change
+            </button>
+          </div>
         )}
 
         <div>
