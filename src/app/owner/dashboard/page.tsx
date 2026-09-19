@@ -25,14 +25,18 @@ export default function OwnerDashboard() {
   const [ticketCode, setTicketCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const handoverScannerInstance = useRef<any>(null);
 
   // Return state
+  const [returnInputMode, setReturnInputMode] = useState<'camera' | 'manual'>('manual');
+  const [returnScanning, setReturnScanning] = useState(false);
   const [returnCode, setReturnCode] = useState('');
+  const [returnManualCode, setReturnManualCode] = useState('');
   const [returning, setReturning] = useState(false);
   const [returnMessage, setReturnMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const returnScannerInstance = useRef<any>(null);
 
   const [activeRentals, setActiveRentals] = useState<ActiveRental[]>([]);
-  const scannerInstance = useRef<any>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -69,15 +73,15 @@ export default function OwnerDashboard() {
     if (!checkingAuth) loadActiveRentals();
   }, [checkingAuth]);
 
+  // Handover camera scanner
   useEffect(() => {
     if (!scanning) return;
-
     let cancelled = false;
 
     import('html5-qrcode').then(({ Html5QrcodeScanner }) => {
       if (cancelled) return;
-      const scanner = new Html5QrcodeScanner('qr-reader', { fps: 10, qrbox: 250 }, false);
-      scannerInstance.current = scanner;
+      const scanner = new Html5QrcodeScanner('qr-reader-handover', { fps: 10, qrbox: 250 }, false);
+      handoverScannerInstance.current = scanner;
 
       scanner.render(
         (decodedText: string) => {
@@ -91,9 +95,35 @@ export default function OwnerDashboard() {
 
     return () => {
       cancelled = true;
-      scannerInstance.current?.clear().catch(() => {});
+      handoverScannerInstance.current?.clear().catch(() => {});
     };
   }, [scanning]);
+
+  // Return camera scanner
+  useEffect(() => {
+    if (!returnScanning) return;
+    let cancelled = false;
+
+    import('html5-qrcode').then(({ Html5QrcodeScanner }) => {
+      if (cancelled) return;
+      const scanner = new Html5QrcodeScanner('qr-reader-return', { fps: 10, qrbox: 250 }, false);
+      returnScannerInstance.current = scanner;
+
+      scanner.render(
+        (decodedText: string) => {
+          setReturnCode(decodedText);
+          setReturnScanning(false);
+          scanner.clear().catch(() => {});
+        },
+        () => {}
+      );
+    });
+
+    return () => {
+      cancelled = true;
+      returnScannerInstance.current?.clear().catch(() => {});
+    };
+  }, [returnScanning]);
 
   function handleUseManualCode() {
     if (!manualCode.trim()) return;
@@ -104,6 +134,17 @@ export default function OwnerDashboard() {
   function handleResetPowerbankCode() {
     setScannedCode('');
     setManualCode('');
+  }
+
+  function handleUseReturnManualCode() {
+    if (!returnManualCode.trim()) return;
+    setReturnCode(returnManualCode.trim());
+    setReturnManualCode('');
+  }
+
+  function handleResetReturnCode() {
+    setReturnCode('');
+    setReturnManualCode('');
   }
 
   async function handleSubmitHandover() {
@@ -145,7 +186,7 @@ export default function OwnerDashboard() {
   async function handleProcessReturn() {
     setReturnMessage(null);
     if (!returnCode.trim()) {
-      setReturnMessage({ type: 'error', text: 'Enter the powerbank code.' });
+      setReturnMessage({ type: 'error', text: 'Enter or scan the powerbank code first.' });
       return;
     }
 
@@ -227,7 +268,7 @@ export default function OwnerDashboard() {
           </button>
         )}
 
-        {!scannedCode && inputMode === 'camera' && scanning && <div id="qr-reader" className="w-full" />}
+        {!scannedCode && inputMode === 'camera' && scanning && <div id="qr-reader-handover" className="w-full" />}
 
         {!scannedCode && inputMode === 'manual' && (
           <div className="space-y-2">
@@ -244,7 +285,6 @@ export default function OwnerDashboard() {
                 Use
               </button>
             </div>
-            <p className="text-xs text-gray-400">Temporary fallback until printed QR codes are available.</p>
           </div>
         )}
 
@@ -285,16 +325,59 @@ export default function OwnerDashboard() {
 
       <div className="bg-white rounded-2xl shadow-xl p-6 space-y-4">
         <h2 className="font-bold text-gray-700">Process Return</h2>
-        <div>
-          <label className="block text-sm font-bold text-gray-700 mb-1">Powerbank Code</label>
-          <input
-            type="text"
-            placeholder="e.g. PB-TEST-001"
-            value={returnCode}
-            onChange={(e) => setReturnCode(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-600 outline-none text-lg"
-          />
-        </div>
+
+        {!returnCode && (
+          <div className="flex rounded-xl overflow-hidden border-2 border-gray-200">
+            <button
+              onClick={() => { setReturnInputMode('camera'); setReturnScanning(false); }}
+              className={`flex-1 py-2 text-sm font-bold ${returnInputMode === 'camera' ? 'bg-orange-600 text-white' : 'bg-white text-gray-500'}`}
+            >
+              Scan QR
+            </button>
+            <button
+              onClick={() => { setReturnInputMode('manual'); setReturnScanning(false); }}
+              className={`flex-1 py-2 text-sm font-bold ${returnInputMode === 'manual' ? 'bg-orange-600 text-white' : 'bg-white text-gray-500'}`}
+            >
+              Type Code
+            </button>
+          </div>
+        )}
+
+        {!returnCode && returnInputMode === 'camera' && !returnScanning && (
+          <button onClick={() => setReturnScanning(true)} className="w-full bg-orange-600 text-white font-bold py-3 rounded-xl">
+            Start Camera Scan
+          </button>
+        )}
+
+        {!returnCode && returnInputMode === 'camera' && returnScanning && <div id="qr-reader-return" className="w-full" />}
+
+        {!returnCode && returnInputMode === 'manual' && (
+          <div className="space-y-2">
+            <label className="block text-sm font-bold text-gray-700">Powerbank Code</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="e.g. PB-TEST-001"
+                value={returnManualCode}
+                onChange={(e) => setReturnManualCode(e.target.value)}
+                className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-600 outline-none text-lg"
+              />
+              <button onClick={handleUseReturnManualCode} className="px-4 bg-gray-800 text-white font-bold rounded-xl">
+                Use
+              </button>
+            </div>
+          </div>
+        )}
+
+        {returnCode && (
+          <div className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded-xl px-4 py-3">
+            <p className="text-sm text-orange-700 font-semibold break-all">Powerbank: {returnCode}</p>
+            <button onClick={handleResetReturnCode} className="text-xs text-gray-400 hover:text-gray-600 ml-2 shrink-0">
+              Change
+            </button>
+          </div>
+        )}
+
         <button
           onClick={handleProcessReturn}
           disabled={returning}
@@ -302,6 +385,7 @@ export default function OwnerDashboard() {
         >
           {returning ? 'Processing…' : 'Mark as Returned'}
         </button>
+
         {returnMessage && (
           <p className={`text-sm text-center font-medium ${returnMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
             {returnMessage.text}
