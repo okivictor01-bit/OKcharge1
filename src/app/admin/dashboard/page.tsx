@@ -14,6 +14,13 @@ interface Location {
   users: { phone: string; name: string | null } | null;
 }
 
+function toE164(rawPhone: string): string {
+  const digits = rawPhone.replace(/\D/g, '');
+  if (digits.startsWith('234')) return `+${digits}`;
+  if (digits.startsWith('0')) return `+234${digits.slice(1)}`;
+  return `+234${digits}`;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -102,12 +109,23 @@ export default function AdminDashboard() {
     }
 
     setSaving(true);
-    const { data: sessionData } = await supabase.auth.getSession();
+
+    // Refresh the session first, so a stale token never silently causes a 401
+    const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
     const accessToken = sessionData.session?.access_token;
 
+    if (sessionError || !accessToken) {
+      setSaving(false);
+      setFormError('Your session expired. Please log in again.');
+      router.push('/admin/login');
+      return;
+    }
+
+    const normalizedPhone = toE164(formOwnerPhone.trim());
+
     const body = editingId
-      ? { action: 'update', location_id: editingId, name: formName, address: formAddress, owner_phone: formOwnerPhone }
-      : { action: 'create', name: formName, address: formAddress, owner_phone: formOwnerPhone };
+      ? { action: 'update', location_id: editingId, name: formName, address: formAddress, owner_phone: normalizedPhone }
+      : { action: 'create', name: formName, address: formAddress, owner_phone: normalizedPhone };
 
     const { data, error } = await supabase.functions.invoke('admin-locations', {
       body,
@@ -126,7 +144,7 @@ export default function AdminDashboard() {
   }
 
   async function toggleActive(loc: Location) {
-    const { data: sessionData } = await supabase.auth.getSession();
+    const { data: sessionData } = await supabase.auth.refreshSession();
     const accessToken = sessionData.session?.access_token;
 
     await supabase.functions.invoke('admin-locations', {
