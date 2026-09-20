@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabaseClient';
+import { parseFunctionError } from '../../../lib/parseFunctionError';
 import type { User } from '@supabase/supabase-js';
 
 interface ActiveRental {
@@ -159,7 +160,7 @@ export default function OwnerDashboard() {
     }
 
     setSubmitting(true);
-    const { data: sessionData } = await supabase.auth.getSession();
+    const { data: sessionData } = await supabase.auth.refreshSession();
     const accessToken = sessionData.session?.access_token;
 
     const { data, error } = await supabase.functions.invoke('handover', {
@@ -172,8 +173,12 @@ export default function OwnerDashboard() {
 
     setSubmitting(false);
 
-    if (error || data?.error) {
-      setMessage({ type: 'error', text: data?.error || error?.message || 'Handover failed.' });
+    if (error) {
+      setMessage({ type: 'error', text: await parseFunctionError(error) });
+      return;
+    }
+    if (data?.error) {
+      setMessage({ type: 'error', text: data.error });
       return;
     }
 
@@ -191,7 +196,7 @@ export default function OwnerDashboard() {
     }
 
     setReturning(true);
-    const { data: sessionData } = await supabase.auth.getSession();
+    const { data: sessionData } = await supabase.auth.refreshSession();
     const accessToken = sessionData.session?.access_token;
 
     const { data, error } = await supabase.functions.invoke('process-return', {
@@ -201,8 +206,12 @@ export default function OwnerDashboard() {
 
     setReturning(false);
 
-    if (error || data?.error) {
-      setReturnMessage({ type: 'error', text: data?.error || error?.message || 'Return processing failed.' });
+    if (error) {
+      setReturnMessage({ type: 'error', text: await parseFunctionError(error) });
+      return;
+    }
+    if (data?.error) {
+      setReturnMessage({ type: 'error', text: data.error });
       return;
     }
 
