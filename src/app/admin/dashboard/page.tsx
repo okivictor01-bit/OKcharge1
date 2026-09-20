@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabaseClient';
+import { parseFunctionError } from '../../../lib/parseFunctionError';
 import type { User } from '@supabase/supabase-js';
 
 interface Location {
@@ -110,7 +111,6 @@ export default function AdminDashboard() {
 
     setSaving(true);
 
-    // Refresh the session first, so a stale token never silently causes a 401
     const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession();
     const accessToken = sessionData.session?.access_token;
 
@@ -134,8 +134,12 @@ export default function AdminDashboard() {
 
     setSaving(false);
 
-    if (error || data?.error) {
-      setFormError(data?.error || error?.message || 'Save failed.');
+    if (error) {
+      setFormError(await parseFunctionError(error));
+      return;
+    }
+    if (data?.error) {
+      setFormError(data.error);
       return;
     }
 
@@ -147,10 +151,14 @@ export default function AdminDashboard() {
     const { data: sessionData } = await supabase.auth.refreshSession();
     const accessToken = sessionData.session?.access_token;
 
-    await supabase.functions.invoke('admin-locations', {
+    const { error } = await supabase.functions.invoke('admin-locations', {
       body: { action: 'update', location_id: loc.id, is_active: !loc.is_active },
       headers: { Authorization: `Bearer ${accessToken}` },
     });
+
+    if (error) {
+      console.error('toggleActive error:', await parseFunctionError(error));
+    }
 
     loadLocations();
   }
