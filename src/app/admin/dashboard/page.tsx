@@ -215,13 +215,19 @@ export default function AdminDashboard() {
               <p className="text-xs text-gray-400">
                 Owner: {loc.users?.phone || 'Unassigned'}
               </p>
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-2 flex-wrap">
                 <button onClick={() => openEditForm(loc)} className="text-sm text-blue-600 font-bold">
                   Edit
                 </button>
                 <button onClick={() => toggleActive(loc)} className="text-sm text-orange-600 font-bold">
                   {loc.is_active ? 'Deactivate' : 'Activate'}
                 </button>
+                
+                  href={`/admin/qrcodes?location_id=${loc.id}`}
+                  className="text-sm text-purple-600 font-bold"
+                >
+                  QR Codes
+                </a>
               </div>
             </div>
           ))}
