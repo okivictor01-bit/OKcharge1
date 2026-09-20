@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
+import { parseFunctionError } from '../lib/parseFunctionError';
 import type { User } from '@supabase/supabase-js';
 
 interface Location {
@@ -78,7 +79,7 @@ export default function RentalForm() {
     setPayError('');
     setSubmitting(true);
 
-    const { data: sessionData } = await supabase.auth.getSession();
+    const { data: sessionData } = await supabase.auth.refreshSession();
     const accessToken = sessionData.session?.access_token;
 
     const { data, error } = await supabase.functions.invoke('initialize-payment', {
@@ -92,8 +93,16 @@ export default function RentalForm() {
 
     setSubmitting(false);
 
-    if (error || !data?.authorization_url) {
-      setPayError(data?.error || error?.message || 'Could not start payment. Try again.');
+    if (error) {
+      setPayError(await parseFunctionError(error));
+      return;
+    }
+    if (data?.error) {
+      setPayError(data.error);
+      return;
+    }
+    if (!data?.authorization_url) {
+      setPayError('Could not start payment. Try again.');
       return;
     }
 
