@@ -221,7 +221,7 @@ export default function AdminDashboard() {
                 </button>
                 <button onClick={() => toggleActive(loc)} className="text-sm text-orange-600 font-bold">
                   {loc.is_active ? 'Deactivate' : 'Activate'}
-                </button>
+                                </button>
                 
                   href={`/admin/qrcodes?location_id=${loc.id}`}
                   className="text-sm text-purple-600 font-bold"
