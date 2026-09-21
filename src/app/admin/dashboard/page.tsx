@@ -178,7 +178,7 @@ export default function AdminDashboard() {
         <p className="text-gray-500 text-sm">
           Logged in as {user?.phone} ({role})
         </p>
-              {role === 'admin' && (
+        {role === 'admin' && (
           <a href="/admin/financials" className="inline-block mt-3 text-sm font-bold text-green-700 bg-green-50 border-2 border-green-200 px-4 py-2 rounded-xl">View Financial Analytics</a>
         )}
       </div>
@@ -222,6 +222,7 @@ export default function AdminDashboard() {
                 <button onClick={() => openEditForm(loc)} className="text-sm text-blue-600 font-bold">Edit</button>
                 <button onClick={() => toggleActive(loc)} className="text-sm text-orange-600 font-bold">{loc.is_active ? 'Deactivate' : 'Activate'}</button>
                 <a href={`/admin/qrcodes?location_id=${loc.id}`} className="text-sm text-purple-600 font-bold">QR Codes</a>
+                <a href={`/admin/payouts?location_id=${loc.id}`} className="text-sm text-green-600 font-bold">Payouts</a>
               </div>
             </div>
           ))}
