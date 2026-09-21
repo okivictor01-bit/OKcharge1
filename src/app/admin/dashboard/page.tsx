@@ -178,13 +178,8 @@ export default function AdminDashboard() {
         <p className="text-gray-500 text-sm">
           Logged in as {user?.phone} ({role})
         </p>
-        {role === 'admin' && (
-          
-            href="/admin/financials"
-            className="inline-block mt-3 text-sm font-bold text-green-700 bg-green-50 border-2 border-green-200 px-4 py-2 rounded-xl"
-          >
-            View Financial Analytics
-          </a>
+              {role === 'admin' && (
+          <a href="/admin/financials" className="inline-block mt-3 text-sm font-bold text-green-700 bg-green-50 border-2 border-green-200 px-4 py-2 rounded-xl">View Financial Analytics</a>
         )}
       </div>
 
