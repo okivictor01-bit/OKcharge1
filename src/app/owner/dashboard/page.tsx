@@ -56,6 +56,18 @@ export default function OwnerDashboard() {
         return;
       }
 
+      // If this owner has no location assigned yet, send them to the pending screen instead
+      const { data: myLocation } = await supabase
+        .from('locations')
+        .select('id')
+        .eq('owner_id', data.session.user.id)
+        .maybeSingle();
+
+      if (!myLocation) {
+        router.push('/owner/pending');
+        return;
+      }
+
       setUser(data.session.user);
       setCheckingAuth(false);
     });
@@ -74,7 +86,6 @@ export default function OwnerDashboard() {
     if (!checkingAuth) loadActiveRentals();
   }, [checkingAuth]);
 
-  // Handover camera scanner
   useEffect(() => {
     if (!scanning) return;
     let cancelled = false;
@@ -100,7 +111,6 @@ export default function OwnerDashboard() {
     };
   }, [scanning]);
 
-  // Return camera scanner
   useEffect(() => {
     if (!returnScanning) return;
     let cancelled = false;
