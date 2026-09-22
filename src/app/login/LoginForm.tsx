@@ -14,6 +14,7 @@ export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const locationId = searchParams.get('location');
+  const redirectTo = searchParams.get('redirect');
 
   const [mode, setMode] = useState<'login' | 'signup'>('signup');
   const [phone, setPhone] = useState('');
@@ -22,6 +23,10 @@ export default function LoginForm() {
   const [error, setError] = useState('');
 
   function redirectAfterAuth() {
+    if (redirectTo) {
+      router.push(redirectTo);
+      return;
+    }
     router.push(locationId ? `/?location=${locationId}` : '/');
   }
 
