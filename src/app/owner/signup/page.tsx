@@ -51,8 +51,6 @@ export default function OwnerSignupPage() {
       return;
     }
 
-    // Create the matching row in our own users table, explicitly as an owner.
-    // id MUST match the Supabase Auth user id for RLS to work.
     const { error: upsertError } = await supabase
       .from('users')
       .upsert(
@@ -67,7 +65,7 @@ export default function OwnerSignupPage() {
       return;
     }
 
-    router.push('/owner/dashboard');
+    router.push('/owner/pending');
   }
 
   return (
