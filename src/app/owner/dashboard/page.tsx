@@ -11,6 +11,8 @@ interface ActiveRental {
   start_time: string;
   expected_return_time: string;
   powerbank_id: string;
+  status: string;
+  late_fee: number;
 }
 
 export default function OwnerDashboard() {
@@ -18,7 +20,6 @@ export default function OwnerDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  // Handover state
   const [inputMode, setInputMode] = useState<'camera' | 'manual'>('manual');
   const [scanning, setScanning] = useState(false);
   const [scannedCode, setScannedCode] = useState('');
@@ -28,7 +29,6 @@ export default function OwnerDashboard() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const handoverScannerInstance = useRef<any>(null);
 
-  // Return state
   const [returnInputMode, setReturnInputMode] = useState<'camera' | 'manual'>('manual');
   const [returnScanning, setReturnScanning] = useState(false);
   const [returnCode, setReturnCode] = useState('');
@@ -56,7 +56,6 @@ export default function OwnerDashboard() {
         return;
       }
 
-      // If this owner has no location assigned yet, send them to the pending screen instead
       const { data: myLocation } = await supabase
         .from('locations')
         .select('id')
@@ -74,10 +73,12 @@ export default function OwnerDashboard() {
   }, [router]);
 
   async function loadActiveRentals() {
+    // Include "overdue" so rentals the cron job has already escalated still show up here —
+    // they're still physically out with a customer and still need to be returned.
     const { data } = await supabase
       .from('rentals')
-      .select('id, duration_hours, start_time, expected_return_time, powerbank_id')
-      .eq('status', 'active')
+      .select('id, duration_hours, start_time, expected_return_time, powerbank_id, status, late_fee')
+      .in('status', ['active', 'overdue'])
       .order('expected_return_time', { ascending: true });
     if (data) setActiveRentals(data);
   }
@@ -238,12 +239,14 @@ export default function OwnerDashboard() {
     loadActiveRentals();
   }
 
-  function formatCountdown(expectedReturn: string): string {
+  function formatCountdown(expectedReturn: string, status: string, lateFee: number): { text: string; isOverdue: boolean } {
     const diffMs = new Date(expectedReturn).getTime() - Date.now();
-    if (diffMs <= 0) return 'Overdue';
+    if (diffMs <= 0 || status === 'overdue') {
+      return { text: `Overdue — ₦${lateFee} accrued`, isOverdue: true };
+    }
     const hrs = Math.floor(diffMs / (1000 * 60 * 60));
     const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    return `${hrs}h ${mins}m left`;
+    return { text: `${hrs}h ${mins}m left`, isOverdue: false };
   }
 
   if (checkingAuth) {
@@ -415,12 +418,17 @@ export default function OwnerDashboard() {
       <div className="bg-white rounded-2xl shadow-xl p-6 space-y-3">
         <h2 className="font-bold text-gray-700">Active Rentals</h2>
         {activeRentals.length === 0 && <p className="text-sm text-gray-400">No active rentals right now.</p>}
-        {activeRentals.map((r) => (
-          <div key={r.id} className="flex justify-between items-center border-b border-gray-100 pb-2">
-            <span className="text-sm text-gray-600">{r.duration_hours}h rental</span>
-            <span className="text-sm font-bold text-blue-600">{formatCountdown(r.expected_return_time)}</span>
-          </div>
-        ))}
+        {activeRentals.map((r) => {
+          const countdown = formatCountdown(r.expected_return_time, r.status, r.late_fee);
+          return (
+            <div key={r.id} className="flex justify-between items-center border-b border-gray-100 pb-2">
+              <span className="text-sm text-gray-600">{r.duration_hours}h rental</span>
+              <span className={`text-sm font-bold ${countdown.isOverdue ? 'text-red-600' : 'text-blue-600'}`}>
+                {countdown.text}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </main>
   );
