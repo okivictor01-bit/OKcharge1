@@ -86,6 +86,8 @@ export default function OwnerLoginPage() {
           >
             {loading ? 'Please wait…' : 'Log In'}
           </button>
+
+          <a href="/owner/signup" className="block text-center text-sm text-gray-400 hover:text-gray-600">New partner? Sign up</a>
         </div>
 
         {error && <p className="text-sm text-red-600 text-center font-medium">{error}</p>}
