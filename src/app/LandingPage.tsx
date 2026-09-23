@@ -45,12 +45,8 @@ export default function LandingPage() {
           <p className="text-blue-100 text-sm">
             Host OKcharge powerbanks at your location and earn 50% of every rental — no equipment cost to you.
           </p>
-          
-            href="/owner/signup"
-            className="inline-block bg-white text-blue-600 font-bold px-6 py-3 rounded-xl mt-2"
-          >
-            Become a Partner
-          </a>
+                    <a href="/owner/signup" className="inline-block bg-white text-blue-600 font-bold px-6 py-3 rounded-xl mt-2">Become a Partner</a>
+            
         </div>
 
         <div className="text-center space-y-2 pt-4">
