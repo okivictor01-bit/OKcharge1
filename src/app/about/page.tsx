@@ -10,18 +10,18 @@ export default function AboutPage() {
       <div className="bg-white rounded-2xl shadow-xl p-6 space-y-4 text-gray-600 leading-relaxed">
         <p>
           OKcharge is a portable powerbank rental network built for people on the move.
-          Never let a dead phone battery slow you down \u2014 find an OKcharge location,
+          Never let a dead phone battery slow you down. Find an OKcharge location,
           scan, pay, and go.
         </p>
         <p>
           We partner with shops, cafes, and kiosks across your city to host our powerbanks,
           so you're never far from a charge. Our partners handle the physical handover and
-          earn a share of every rental made at their location \u2014 a simple, low-cost way to
+          earn a share of every rental made at their location, a simple, low-cost way to
           add a new income stream to an existing business.
         </p>
         <p>
           OKcharge handles the technology: secure payments, automated tracking, and a
-          simple app experience \u2014 no downloads required.
+          simple app experience. No downloads required.
         </p>
       </div>
 
