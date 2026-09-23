@@ -15,9 +15,14 @@ interface ActiveRental {
   late_fee: number;
 }
 
-interface Earnings {
+interface TodayEarnings {
   totalRentals: number;
   totalEarnings: number;
+}
+
+function todayRangeUTC(): { start: string; end: string } {
+  const today = new Date().toISOString().split('T')[0];
+  return { start: `${today}T00:00:00.000Z`, end: `${today}T23:59:59.999Z` };
 }
 
 export default function OwnerDashboard() {
@@ -25,7 +30,7 @@ export default function OwnerDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  const [earnings, setEarnings] = useState<Earnings | null>(null);
+  const [todayEarnings, setTodayEarnings] = useState<TodayEarnings | null>(null);
   const [loadingEarnings, setLoadingEarnings] = useState(true);
 
   const [inputMode, setInputMode] = useState<'camera' | 'manual'>('manual');
@@ -80,18 +85,21 @@ export default function OwnerDashboard() {
     });
   }, [router]);
 
-  async function loadEarnings() {
+  async function loadTodayEarnings() {
     setLoadingEarnings(true);
+    const { start, end } = todayRangeUTC();
     // RLS already restricts this to only rentals at locations this owner actually owns.
     const { data, error } = await supabase
       .from('rentals')
-      .select('initial_payment');
+      .select('initial_payment')
+      .gte('start_time', start)
+      .lte('start_time', end);
 
     setLoadingEarnings(false);
     if (error || !data) return;
 
     const totalPayments = data.reduce((sum, r) => sum + Number(r.initial_payment || 0), 0);
-    setEarnings({
+    setTodayEarnings({
       totalRentals: data.length,
       totalEarnings: totalPayments * 0.5,
     });
@@ -109,7 +117,7 @@ export default function OwnerDashboard() {
   useEffect(() => {
     if (!checkingAuth) {
       loadActiveRentals();
-      loadEarnings();
+      loadTodayEarnings();
     }
   }, [checkingAuth]);
 
@@ -223,7 +231,7 @@ export default function OwnerDashboard() {
     setScannedCode('');
     setTicketCode('');
     loadActiveRentals();
-    loadEarnings();
+    loadTodayEarnings();
   }
 
   async function handleProcessReturn() {
@@ -292,17 +300,20 @@ export default function OwnerDashboard() {
       </div>
 
       <div className="bg-green-50 border-2 border-green-200 rounded-2xl shadow-xl p-6 text-center space-y-1">
-        <p className="text-xs font-bold text-green-700 uppercase">My Earnings</p>
+        <p className="text-xs font-bold text-green-700 uppercase">Today's Earnings</p>
         {loadingEarnings ? (
           <p className="text-sm text-gray-400">Loading…</p>
         ) : (
           <>
             <p className="text-4xl font-extrabold text-green-700">
-              ₦{(earnings?.totalEarnings || 0).toLocaleString()}
+              ₦{(todayEarnings?.totalEarnings || 0).toLocaleString()}
             </p>
-            <p className="text-xs text-green-600">{earnings?.totalRentals || 0} total rentals</p>
+            <p className="text-xs text-green-600">{todayEarnings?.totalRentals || 0} rentals today</p>
           </>
         )}
+        <a href="/owner/earnings" className="inline-block mt-2 text-sm font-bold text-green-700 underline">
+          View Full History &amp; Past Earnings
+        </a>
       </div>
 
       <div className="bg-white rounded-2xl shadow-xl p-6 space-y-4">
