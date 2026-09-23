@@ -11,7 +11,9 @@ interface RentalRow {
   duration_hours: number;
   initial_payment: number;
   late_fee: number;
+  late_fee_collected: boolean;
   theft_penalty: number;
+  theft_penalty_collected: boolean;
   location_name: string;
 }
 
@@ -19,8 +21,9 @@ interface FinancialsData {
   range: { from: string; to: string };
   rental_count: number;
   total_initial_payments: number;
-  total_late_fees: number;
-  total_theft_penalties: number;
+  total_late_fees_collected: number;
+  total_theft_penalties_collected: number;
+  total_uncollected: number;
   estimated_owner_payout: number;
   estimated_platform_earnings: number;
   rentals: RentalRow[];
@@ -52,7 +55,6 @@ export default function FinancialsPage() {
         .eq('id', data.session.user.id)
         .single();
 
-      // Financial Analytics is Admin-only — Staff is redirected away, matching the server-side check
       if (!profile || profile.role !== 'admin') {
         router.push('/admin/dashboard');
         return;
@@ -175,6 +177,7 @@ export default function FinancialsPage() {
               <p className="text-2xl font-extrabold text-green-700">
                 {formatNaira(data.estimated_platform_earnings)}
               </p>
+              <p className="text-xs text-green-600 mt-1">Actually collected</p>
             </div>
             <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4">
               <p className="text-xs font-bold text-blue-700">Owner Payouts</p>
@@ -186,11 +189,12 @@ export default function FinancialsPage() {
               <p className="text-xs font-bold text-gray-600">Total Rentals</p>
               <p className="text-2xl font-extrabold text-gray-800">{data.rental_count}</p>
             </div>
-            <div className="bg-orange-50 border-2 border-orange-200 rounded-2xl p-4">
-              <p className="text-xs font-bold text-orange-700">Late/Theft Fees</p>
-              <p className="text-2xl font-extrabold text-orange-700">
-                {formatNaira(data.total_late_fees + data.total_theft_penalties)}
+            <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4">
+              <p className="text-xs font-bold text-red-700">Pending Collection</p>
+              <p className="text-2xl font-extrabold text-red-700">
+                {formatNaira(data.total_uncollected)}
               </p>
+              <p className="text-xs text-red-600 mt-1">Charge failed, owed by customer</p>
             </div>
           </div>
 
@@ -225,8 +229,16 @@ export default function FinancialsPage() {
                   <span>{new Date(r.start_time).toLocaleString()}</span>
                   <span>
                     {formatNaira(r.initial_payment)}
-                    {r.late_fee > 0 && ` + ${formatNaira(r.late_fee)} late`}
-                    {r.theft_penalty > 0 && ` + ${formatNaira(r.theft_penalty)} theft`}
+                    {r.late_fee > 0 && (
+                      <span className={r.late_fee_collected ? '' : 'text-red-600 font-bold'}>
+                        {' + '}{formatNaira(r.late_fee)} late{!r.late_fee_collected && ' (unpaid)'}
+                      </span>
+                    )}
+                    {r.theft_penalty > 0 && (
+                      <span className={r.theft_penalty_collected ? '' : 'text-red-600 font-bold'}>
+                        {' + '}{formatNaira(r.theft_penalty)} theft{!r.theft_penalty_collected && ' (unpaid)'}
+                      </span>
+                    )}
                   </span>
                 </div>
               </div>
