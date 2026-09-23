@@ -13,7 +13,7 @@ export default function FaqPage() {
       a: 'A late fee of ₦100 is charged for every hour past your selected duration, capped at ₦2,000. This is charged automatically to your saved card, or added to your account balance if no card is on file.',
     },
     {
-      q: 'What happens if I don\u2019t return the powerbank at all?',
+      q: "What happens if I don't return the powerbank at all?",
       a: 'If a powerbank is not returned within 7 days of the rental expiring, it is treated as lost or stolen and a flat replacement fee of ₦15,000 is charged.',
     },
     {
@@ -21,12 +21,12 @@ export default function FaqPage() {
       a: 'Card payment is required for your first rental so we have a valid, chargeable payment method on file in case of late fees or an unreturned powerbank. After that, you can pay by card, bank transfer, or USSD.',
     },
     {
-      q: 'My account is suspended \u2014 how do I fix it?',
-      a: 'An account is suspended if a late fee or theft penalty could not be charged automatically. Log in and go to "Manage my account" to view and pay off any outstanding balance \u2014 your account is restored as soon as it\u2019s cleared.',
+      q: 'My account is suspended. How do I fix it?',
+      a: "An account is suspended if a late fee or theft penalty could not be charged automatically. Log in and go to 'Manage my account' to view and pay off any outstanding balance. Your account is restored as soon as it's cleared.",
     },
     {
-      q: 'I own a shop or kiosk \u2014 how do I become a partner?',
-      a: 'Sign up on our Partner page. Once approved, OKcharge sets up your location, provides powerbank QR codes, and you earn 50% of every rental made at your location \u2014 with no equipment cost to you.',
+      q: 'I own a shop or kiosk. How do I become a partner?',
+      a: "Sign up on our Partner page. Once approved, OKcharge sets up your location, provides powerbank QR codes, and you earn 50% of every rental made at your location, with no equipment cost to you.",
     },
   ];
 
