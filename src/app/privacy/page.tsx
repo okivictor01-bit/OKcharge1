@@ -11,7 +11,7 @@ export default function PrivacyPage() {
       <div className="bg-white rounded-2xl shadow-xl p-6 space-y-5 text-gray-600 leading-relaxed text-sm">
         <section>
           <h2 className="font-bold text-gray-800 mb-1">Information We Collect</h2>
-          <p>We collect your name, phone number, and rental history to operate the service. Payment details (such as card information) are collected and securely stored by our payment processor, Paystack \u2014 OKcharge never sees or stores your full card details directly.</p>
+          <p>We collect your name, phone number, and rental history to operate the service. Payment details (such as card information) are collected and securely stored by our payment processor, Paystack. OKcharge never sees or stores your full card details directly.</p>
         </section>
 
         <section>
