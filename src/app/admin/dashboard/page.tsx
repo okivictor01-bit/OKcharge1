@@ -179,7 +179,10 @@ export default function AdminDashboard() {
           Logged in as {user?.phone} ({role})
         </p>
         {role === 'admin' && (
-          <a href="/admin/financials" className="inline-block mt-3 text-sm font-bold text-green-700 bg-green-50 border-2 border-green-200 px-4 py-2 rounded-xl">View Financial Analytics</a>
+          <div className="flex flex-wrap justify-center gap-2 mt-3">
+            <a href="/admin/financials" className="text-sm font-bold text-green-700 bg-green-50 border-2 border-green-200 px-4 py-2 rounded-xl">View Financial Analytics</a>
+            <a href="/admin/staff" className="text-sm font-bold text-purple-700 bg-purple-50 border-2 border-purple-200 px-4 py-2 rounded-xl">Manage Staff</a>
+          </div>
         )}
       </div>
 
