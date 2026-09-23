@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
 import { parseFunctionError } from '../lib/parseFunctionError';
+import LandingPage from './LandingPage';
 import type { User } from '@supabase/supabase-js';
 
 interface Location {
@@ -110,16 +111,7 @@ export default function RentalForm() {
   }
 
   if (!locationCode) {
-    return (
-      <main className="min-h-screen p-6 flex flex-col items-center justify-center max-w-md mx-auto text-center">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h1 className="text-2xl font-bold text-red-600 mb-2">Invalid Link</h1>
-          <p className="text-gray-500">
-            Please scan the QR code at an OKcharge location to start a rental.
-          </p>
-        </div>
-      </main>
-    );
+    return <LandingPage />;
   }
 
   if (loadingLocation || checkingAuth) {
