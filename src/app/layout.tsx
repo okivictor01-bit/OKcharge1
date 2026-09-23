@@ -1,11 +1,15 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
+import Header from './components/Header'
 import Footer from './components/Footer'
 
 export const metadata: Metadata = {
   title: 'OKcharge - Powerbank Rental',
   description: 'Rent a powerbank instantly across partner locations.',
+  icons: {
+    icon: '/logo.png',
+  },
 }
 
 export default function RootLayout({
@@ -16,6 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <Header />
         {children}
         <Footer />
         <a href="https://wa.me/2347032385674" target="_blank" rel="noopener noreferrer" aria-label="Chat with us on WhatsApp" style={{ position: 'fixed', bottom: '20px', right: '20px', width: '56px', height: '56px', backgroundColor: '#25D366', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.25)', zIndex: 9999 }}>
