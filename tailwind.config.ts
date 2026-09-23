@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss'
+import colors from 'tailwindcss/colors'
 
 const config: Config = {
   content: [
@@ -9,10 +10,11 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        brand: '#0052FF', // OKcharge primary blue color
+        blue: colors.green,
       },
     },
   },
   plugins: [],
 }
+
 export default config
