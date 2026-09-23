@@ -15,10 +15,18 @@ interface ActiveRental {
   late_fee: number;
 }
 
+interface Earnings {
+  totalRentals: number;
+  totalEarnings: number;
+}
+
 export default function OwnerDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
+
+  const [earnings, setEarnings] = useState<Earnings | null>(null);
+  const [loadingEarnings, setLoadingEarnings] = useState(true);
 
   const [inputMode, setInputMode] = useState<'camera' | 'manual'>('manual');
   const [scanning, setScanning] = useState(false);
@@ -72,9 +80,24 @@ export default function OwnerDashboard() {
     });
   }, [router]);
 
+  async function loadEarnings() {
+    setLoadingEarnings(true);
+    // RLS already restricts this to only rentals at locations this owner actually owns.
+    const { data, error } = await supabase
+      .from('rentals')
+      .select('initial_payment');
+
+    setLoadingEarnings(false);
+    if (error || !data) return;
+
+    const totalPayments = data.reduce((sum, r) => sum + Number(r.initial_payment || 0), 0);
+    setEarnings({
+      totalRentals: data.length,
+      totalEarnings: totalPayments * 0.5,
+    });
+  }
+
   async function loadActiveRentals() {
-    // Include "overdue" so rentals the cron job has already escalated still show up here —
-    // they're still physically out with a customer and still need to be returned.
     const { data } = await supabase
       .from('rentals')
       .select('id, duration_hours, start_time, expected_return_time, powerbank_id, status, late_fee')
@@ -84,7 +107,10 @@ export default function OwnerDashboard() {
   }
 
   useEffect(() => {
-    if (!checkingAuth) loadActiveRentals();
+    if (!checkingAuth) {
+      loadActiveRentals();
+      loadEarnings();
+    }
   }, [checkingAuth]);
 
   useEffect(() => {
@@ -197,6 +223,7 @@ export default function OwnerDashboard() {
     setScannedCode('');
     setTicketCode('');
     loadActiveRentals();
+    loadEarnings();
   }
 
   async function handleProcessReturn() {
@@ -262,6 +289,20 @@ export default function OwnerDashboard() {
       <div className="text-center">
         <h1 className="text-3xl font-extrabold text-blue-600">OKcharge Partner</h1>
         <p className="text-gray-500 text-sm">Logged in as {user?.phone}</p>
+      </div>
+
+      <div className="bg-green-50 border-2 border-green-200 rounded-2xl shadow-xl p-6 text-center space-y-1">
+        <p className="text-xs font-bold text-green-700 uppercase">My Earnings</p>
+        {loadingEarnings ? (
+          <p className="text-sm text-gray-400">Loading…</p>
+        ) : (
+          <>
+            <p className="text-4xl font-extrabold text-green-700">
+              ₦{(earnings?.totalEarnings || 0).toLocaleString()}
+            </p>
+            <p className="text-xs text-green-600">{earnings?.totalRentals || 0} total rentals</p>
+          </>
+        )}
       </div>
 
       <div className="bg-white rounded-2xl shadow-xl p-6 space-y-4">
