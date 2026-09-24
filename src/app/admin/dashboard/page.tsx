@@ -184,6 +184,9 @@ export default function AdminDashboard() {
             <a href="/admin/staff" className="text-sm font-bold text-purple-700 bg-purple-50 border-2 border-purple-200 px-4 py-2 rounded-xl">Manage Staff</a>
           </div>
         )}
+        <div className="flex justify-center mt-2">
+          <a href="/admin/recover-ticket" className="text-sm font-bold text-orange-700 bg-orange-50 border-2 border-orange-200 px-4 py-2 rounded-xl">Recover Ticket</a>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-xl p-6 space-y-4">
