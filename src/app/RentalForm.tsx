@@ -43,6 +43,14 @@ export default function RentalForm() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  // No location scanned, but the person is already logged in — send them to their
+  // own dashboard instead of the marketing page meant for new/anonymous visitors.
+  useEffect(() => {
+    if (!checkingAuth && !locationCode && user) {
+      router.replace('/dashboard');
+    }
+  }, [checkingAuth, locationCode, user, router]);
+
   useEffect(() => {
     if (!locationCode) {
       setLoadingLocation(false);
@@ -111,6 +119,14 @@ export default function RentalForm() {
   }
 
   if (!locationCode) {
+    if (checkingAuth || user) {
+      // Either still checking, or redirecting a logged-in user to /dashboard above.
+      return (
+        <main className="min-h-screen flex items-center justify-center">
+          <p className="text-gray-400">Loading…</p>
+        </main>
+      );
+    }
     return <LandingPage />;
   }
 
