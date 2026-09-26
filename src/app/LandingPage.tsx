@@ -1,7 +1,6 @@
 export default function LandingPage() {
   return (
     <main className="min-h-screen bg-white">
-      {/* Hero section with background image */}
       <div
         className="relative min-h-[420px] flex items-center justify-center px-6 py-20"
         style={{
@@ -10,7 +9,7 @@ export default function LandingPage() {
           backgroundPosition: 'center',
         }}
       >
-        <div className="max-w-md text-center space-y-3">
+        <div className="max-w-md text-center space-y-4">
           <h1 className="text-5xl font-extrabold text-white drop-shadow-lg">OKcharge</h1>
           <p className="text-lg text-white font-medium drop-shadow">
             Never run out of battery on the go.
@@ -18,6 +17,9 @@ export default function LandingPage() {
           <p className="text-sm text-gray-200 drop-shadow">
             Rent a fully charged powerbank at partner locations near you — no app download required.
           </p>
+          <a href="/login" className="inline-block bg-white text-blue-600 font-bold px-6 py-3 rounded-xl mt-2">
+            Sign Up / Log In
+          </a>
         </div>
       </div>
 
@@ -28,16 +30,16 @@ export default function LandingPage() {
           <div className="flex items-start gap-4">
             <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center shrink-0">1</div>
             <div>
-              <p className="font-bold text-gray-800">Scan the QR code</p>
-              <p className="text-sm text-gray-500">Find the OKcharge display at any partner location and scan to start.</p>
+              <p className="font-bold text-gray-800">Create your account</p>
+              <p className="text-sm text-gray-500">Sign up once and get your own dashboard.</p>
             </div>
           </div>
 
           <div className="flex items-start gap-4">
             <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center shrink-0">2</div>
             <div>
-              <p className="font-bold text-gray-800">Pick a duration &amp; pay</p>
-              <p className="text-sm text-gray-500">Choose 1, 3, 5, or 24 hours. Pay instantly by card, transfer, or USSD.</p>
+              <p className="font-bold text-gray-800">Scan a location QR code</p>
+              <p className="text-sm text-gray-500">From your dashboard, or the QR code at any partner location.</p>
             </div>
           </div>
 
