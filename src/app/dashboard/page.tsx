@@ -129,11 +129,7 @@ export default function CustomerDashboard() {
             </p>
           </div>
           
-            href="/account"
-            className="inline-block w-full bg-red-600 text-white font-bold py-3 rounded-xl"
-          >
-            Pay Now to Restore Account
-          </a>
+                      <a href="/account" className="inline-block w-full bg-red-600 text-white font-bold py-3 rounded-xl">Pay Now to Restore Account</a>
         </div>
       ) : (
         <div className="bg-green-50 border-2 border-green-200 rounded-2xl shadow-xl p-6 text-center">
