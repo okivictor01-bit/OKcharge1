@@ -17,6 +17,8 @@ export default function LoginForm() {
   const redirectTo = searchParams.get('redirect');
 
   const [mode, setMode] = useState<'login' | 'signup'>('signup');
+  const [name, setName] = useState('');
+  const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,11 +29,17 @@ export default function LoginForm() {
       router.push(redirectTo);
       return;
     }
-    router.push(locationId ? `/?location=${locationId}` : '/');
+    if (locationId) {
+      router.push(`/?location=${locationId}`);
+      return;
+    }
+    router.push('/dashboard');
   }
 
   async function handleSignup() {
     setError('');
+    if (!name.trim()) return setError('Please enter your full name.');
+    if (!address.trim()) return setError('Please enter your home address.');
     if (phone.replace(/\D/g, '').length < 10) return setError('Enter a valid phone number.');
     if (password.length < 6) return setError('Password must be at least 6 characters.');
 
@@ -51,7 +59,10 @@ export default function LoginForm() {
 
     const { error: upsertError } = await supabase
       .from('users')
-      .upsert({ id: data.user.id, phone: e164Phone }, { onConflict: 'id' });
+      .upsert(
+        { id: data.user.id, phone: e164Phone, name: name.trim(), address: address.trim() },
+        { onConflict: 'id' }
+      );
 
     setLoading(false);
     if (upsertError) return setError(upsertError.message);
@@ -82,6 +93,30 @@ export default function LoginForm() {
         </div>
 
         <div className="space-y-4">
+          {mode === 'signup' && (
+            <>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Full Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Ada Obi"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-600 outline-none text-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Home Address</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 12 Allen Avenue, Ikeja, Lagos"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-600 outline-none text-lg"
+                />
+              </div>
+            </>
+          )}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-1">Phone Number</label>
             <input
