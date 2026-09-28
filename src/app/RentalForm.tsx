@@ -13,6 +13,9 @@ interface Location {
   is_active: boolean;
 }
 
+// CUSTOMIZE: duration options for this client's rentals
+const DURATIONS = [1, 3, 5, 24];
+
 export default function RentalForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -25,8 +28,9 @@ export default function RentalForm() {
   const [loadingLocation, setLoadingLocation] = useState(true);
   const [locationError, setLocationError] = useState('');
 
-  const [duration, setDuration] = useState(1);
+  const [duration, setDuration] = useState(DURATIONS[0]);
   const [name, setName] = useState('');
+  const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [payError, setPayError] = useState('');
 
@@ -85,6 +89,11 @@ export default function RentalForm() {
       return;
     }
 
+    if (!agreed) {
+      setPayError('Please agree to the Terms & Conditions to continue.');
+      return;
+    }
+
     setPayError('');
     setSubmitting(true);
 
@@ -120,7 +129,6 @@ export default function RentalForm() {
 
   if (!locationCode) {
     if (checkingAuth || user) {
-      // Either still checking, or redirecting a logged-in user to /dashboard above.
       return (
         <main className="min-h-screen flex items-center justify-center">
           <p className="text-gray-400">Loading…</p>
@@ -169,7 +177,7 @@ export default function RentalForm() {
         <div className="space-y-4">
           <label className="block text-sm font-bold text-gray-700">Select Duration</label>
           <div className="grid grid-cols-2 gap-3">
-            {[1, 3, 5, 24].map((hours) => (
+            {DURATIONS.map((hours) => (
               <button
                 key={hours}
                 onClick={() => setDuration(hours)}
@@ -202,9 +210,35 @@ export default function RentalForm() {
           </p>
         )}
 
+        {/* CUSTOMIZE: fee amounts here must match process-return / hourly-escalation exactly */}
+        <div className="border-2 border-blue-200 bg-blue-50 rounded-xl p-4 space-y-2">
+          <p className="text-sm font-bold text-blue-800">Card Required for Your First Rental</p>
+          <p className="text-xs text-blue-700 leading-relaxed">
+            Your first rental must be paid by card. By completing this payment, you authorize OKcharge
+            to use the eligible payment authorization provided by our payment provider to charge
+            applicable fees under our Terms &amp; Conditions.
+          </p>
+          <ul className="text-xs text-blue-700 leading-relaxed list-disc pl-4 space-y-0.5">
+            <li>Late return: ₦100/hour after a 1-hour grace period</li>
+            <li>Maximum late fee: ₦2,000</li>
+            <li>Not returned 7 days after rental expiry: ₦15,000 replacement charge</li>
+          </ul>
+          <label className="flex items-start gap-2 pt-1 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-blue-600 shrink-0"
+            />
+            <span className="text-xs text-blue-800">
+              I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline font-bold">OKcharge Terms &amp; Conditions</a> and authorize applicable charges described above.
+            </span>
+          </label>
+        </div>
+
         <button
           onClick={handlePayClick}
-          disabled={submitting}
+          disabled={submitting || (!!user && !agreed)}
           className="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-xl mt-4 hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-500/30 disabled:opacity-50"
         >
           {submitting ? 'Please wait…' : user ? 'Pay & Rent Now' : 'Continue to Login'}
@@ -213,10 +247,6 @@ export default function RentalForm() {
         {payError && (
           <p className="text-sm text-red-600 text-center font-medium">{payError}</p>
         )}
-
-        <p className="text-xs text-center text-gray-400 mt-4 leading-relaxed">
-          By continuing, you agree to authorize a saved payment method. Unreturned powerbanks incur a flat ₦15,000 penalty.
-        </p>
       </div>
     </main>
   );
