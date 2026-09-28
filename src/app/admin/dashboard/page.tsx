@@ -15,6 +15,13 @@ interface Location {
   users: { phone: string; name: string | null } | null;
 }
 
+interface PendingOwner {
+  id: string;
+  phone: string;
+  name: string | null;
+  created_at: string;
+}
+
 function toE164(rawPhone: string): string {
   const digits = rawPhone.replace(/\D/g, '');
   if (digits.startsWith('234')) return `+${digits}`;
@@ -30,6 +37,9 @@ export default function AdminDashboard() {
 
   const [locations, setLocations] = useState<Location[]>([]);
   const [loadingLocations, setLoadingLocations] = useState(true);
+
+  const [pendingOwners, setPendingOwners] = useState<PendingOwner[]>([]);
+  const [loadingPending, setLoadingPending] = useState(true);
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -62,29 +72,41 @@ export default function AdminDashboard() {
     });
   }, [router]);
 
-  async function loadLocations() {
-    setLoadingLocations(true);
-    const { data: sessionData } = await supabase.auth.getSession();
+  async function callFunction(body: Record<string, unknown>) {
+    const { data: sessionData } = await supabase.auth.refreshSession();
     const accessToken = sessionData.session?.access_token;
-
-    const { data, error } = await supabase.functions.invoke('admin-locations', {
-      body: { action: 'list' },
+    return supabase.functions.invoke('admin-locations', {
+      body,
       headers: { Authorization: `Bearer ${accessToken}` },
     });
+  }
 
+  async function loadLocations() {
+    setLoadingLocations(true);
+    const { data, error } = await callFunction({ action: 'list' });
     setLoadingLocations(false);
     if (!error && data?.locations) setLocations(data.locations);
   }
 
+  async function loadPendingOwners() {
+    setLoadingPending(true);
+    const { data, error } = await callFunction({ action: 'list_pending_owners' });
+    setLoadingPending(false);
+    if (!error && data?.pending_owners) setPendingOwners(data.pending_owners);
+  }
+
   useEffect(() => {
-    if (!checkingAuth) loadLocations();
+    if (!checkingAuth) {
+      loadLocations();
+      loadPendingOwners();
+    }
   }, [checkingAuth]);
 
-  function openCreateForm() {
+  function openCreateForm(prefillPhone?: string) {
     setEditingId(null);
     setFormName('');
     setFormAddress('');
-    setFormOwnerPhone('');
+    setFormOwnerPhone(prefillPhone || '');
     setFormError('');
     setShowForm(true);
   }
@@ -145,22 +167,23 @@ export default function AdminDashboard() {
 
     setShowForm(false);
     loadLocations();
+    loadPendingOwners();
   }
 
   async function toggleActive(loc: Location) {
-    const { data: sessionData } = await supabase.auth.refreshSession();
-    const accessToken = sessionData.session?.access_token;
-
-    const { error } = await supabase.functions.invoke('admin-locations', {
-      body: { action: 'update', location_id: loc.id, is_active: !loc.is_active },
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
+    const { error } = await callFunction({ action: 'update', location_id: loc.id, is_active: !loc.is_active });
     if (error) {
       console.error('toggleActive error:', await parseFunctionError(error));
     }
-
     loadLocations();
+  }
+
+  function formatWaiting(createdAt: string): string {
+    const diffMs = Date.now() - new Date(createdAt).getTime();
+    const hrs = Math.floor(diffMs / (1000 * 60 * 60));
+    if (hrs < 1) return 'Just now';
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
   }
 
   if (checkingAuth) {
@@ -174,7 +197,7 @@ export default function AdminDashboard() {
   return (
     <main className="min-h-screen p-6 max-w-2xl mx-auto space-y-6">
       <div className="text-center">
-        <h1 className="text-3xl font-extrabold text-gray-800">OKcharge Admin</h1>
+        <h1 className="text-3xl font-extrabold text-gray-800">Admin</h1>
         <p className="text-gray-500 text-sm">
           Logged in as {user?.phone} ({role})
         </p>
@@ -189,11 +212,38 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {!loadingPending && pendingOwners.length > 0 && (
+        <div className="bg-yellow-50 border-2 border-yellow-300 rounded-2xl shadow-xl p-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-yellow-800">⚠ Pending Partners ({pendingOwners.length})</h2>
+          </div>
+          <p className="text-xs text-yellow-700">
+            These partners have signed up but have no location set up yet.
+          </p>
+          <div className="space-y-2">
+            {pendingOwners.map((owner) => (
+              <div key={owner.id} className="bg-white rounded-xl p-3 flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-gray-800">{owner.name || 'No name provided'}</p>
+                  <p className="text-xs text-gray-500">{owner.phone} · {formatWaiting(owner.created_at)}</p>
+                </div>
+                <button
+                  onClick={() => openCreateForm(owner.phone)}
+                  className="text-sm font-bold text-white bg-yellow-600 px-3 py-2 rounded-lg shrink-0"
+                >
+                  Set Up Location
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl shadow-xl p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-bold text-gray-700">Locations</h2>
           <button
-            onClick={openCreateForm}
+            onClick={() => openCreateForm()}
             className="bg-gray-800 text-white text-sm font-bold px-4 py-2 rounded-xl"
           >
             + New Location
@@ -272,7 +322,7 @@ export default function AdminDashboard() {
                 className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 outline-none"
               />
               <p className="text-xs text-gray-400 mt-1">
-                The owner must already have an OKcharge account (signed up via the customer login page).
+                The owner must already have an account (signed up via the customer login page).
               </p>
             </div>
 
