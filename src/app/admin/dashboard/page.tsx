@@ -205,6 +205,7 @@ export default function AdminDashboard() {
           <div className="flex flex-wrap justify-center gap-2 mt-3">
             <a href="/admin/financials" className="text-sm font-bold text-green-700 bg-green-50 border-2 border-green-200 px-4 py-2 rounded-xl">View Financial Analytics</a>
             <a href="/admin/staff" className="text-sm font-bold text-purple-700 bg-purple-50 border-2 border-purple-200 px-4 py-2 rounded-xl">Manage Staff</a>
+            <a href="/admin/suspended" className="text-sm font-bold text-red-700 bg-red-50 border-2 border-red-200 px-4 py-2 rounded-xl">Suspended Accounts</a>
           </div>
         )}
         <div className="flex justify-center mt-2">
