@@ -208,8 +208,9 @@ export default function AdminDashboard() {
             <a href="/admin/suspended" className="text-sm font-bold text-red-700 bg-red-50 border-2 border-red-200 px-4 py-2 rounded-xl">Suspended Accounts</a>
           </div>
         )}
-        <div className="flex justify-center mt-2">
+        <div className="flex flex-wrap justify-center gap-2 mt-2">
           <a href="/admin/recover-ticket" className="text-sm font-bold text-orange-700 bg-orange-50 border-2 border-orange-200 px-4 py-2 rounded-xl">Recover Ticket</a>
+          <a href="/admin/reset-password" className="text-sm font-bold text-gray-700 bg-gray-50 border-2 border-gray-200 px-4 py-2 rounded-xl">Reset Password</a>
         </div>
       </div>
 
