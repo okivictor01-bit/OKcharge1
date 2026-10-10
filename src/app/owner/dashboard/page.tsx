@@ -193,6 +193,11 @@ export default function OwnerDashboard() {
     setReturnManualCode('');
   }
 
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    router.push('/owner/login');
+  }
+
   async function handleSubmitHandover() {
     setMessage(null);
     if (!scannedCode) {
@@ -297,6 +302,10 @@ export default function OwnerDashboard() {
       <div className="text-center">
         <h1 className="text-3xl font-extrabold text-blue-600">OKcharge Partner</h1>
         <p className="text-gray-500 text-sm">Logged in as {user?.phone}</p>
+        <div className="flex justify-center gap-4 mt-2">
+          <a href="/owner/change-password" className="text-xs text-gray-500 underline">Change password</a>
+          <button onClick={handleLogout} className="text-xs text-gray-500 underline">Log out</button>
+        </div>
       </div>
 
       <div className="bg-green-50 border-2 border-green-200 rounded-2xl shadow-xl p-6 text-center space-y-1">
@@ -311,9 +320,7 @@ export default function OwnerDashboard() {
             <p className="text-xs text-green-600">{todayEarnings?.totalRentals || 0} rentals today</p>
           </>
         )}
-        <a href="/owner/earnings" className="inline-block mt-2 text-sm font-bold text-green-700 underline">
-          View Full History &amp; Past Earnings
-        </a>
+        <a href="/owner/earnings" className="inline-block mt-2 text-sm font-bold text-green-700 underline">View Full History &amp; Past Earnings</a>
       </div>
 
       <div className="bg-white rounded-2xl shadow-xl p-6 space-y-4">
