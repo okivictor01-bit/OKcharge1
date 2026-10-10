@@ -10,6 +10,10 @@ function toE164(rawPhone: string): string {
   return `+234${digits}`;
 }
 
+const FORGOT_PASSWORD_URL =
+  'https://wa.me/2347032385674?text=' +
+  encodeURIComponent('Hello, I forgot my OKcharge partner password. My phone number is: ');
+
 export default function OwnerLoginPage() {
   const router = useRouter();
   const [phone, setPhone] = useState('');
@@ -86,6 +90,8 @@ export default function OwnerLoginPage() {
           >
             {loading ? 'Please wait…' : 'Log In'}
           </button>
+
+          <a href={FORGOT_PASSWORD_URL} target="_blank" rel="noopener noreferrer" className="block text-center text-sm text-blue-600 font-bold">Forgot password? Message us on WhatsApp</a>
 
           <a href="/owner/signup" className="block text-center text-sm text-gray-400 hover:text-gray-600">New partner? Sign up</a>
         </div>
