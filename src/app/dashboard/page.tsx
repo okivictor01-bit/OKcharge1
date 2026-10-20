@@ -12,6 +12,14 @@ interface Profile {
   outstanding_debt: number;
 }
 
+interface UnusedTicket {
+  ticket_code: string;
+  duration_hours: number;
+  initial_payment: number;
+  created_at: string;
+  locations: { name: string } | null;
+}
+
 interface ActiveRental {
   id: string;
   duration_hours: number;
@@ -36,6 +44,7 @@ export default function CustomerDashboard() {
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [tickets, setTickets] = useState<UnusedTicket[]>([]);
   const [activeRental, setActiveRental] = useState<ActiveRental | null>(null);
   const [pastRentals, setPastRentals] = useState<PastRental[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,8 +60,8 @@ export default function CustomerDashboard() {
     });
   }, [router]);
 
-  async function loadAll(userId: string) {
-    setLoading(true);
+  async function loadAll(userId: string, silent = false) {
+    if (!silent) setLoading(true);
 
     const { data: profileData } = await supabase
       .from('users')
@@ -60,6 +69,16 @@ export default function CustomerDashboard() {
       .eq('id', userId)
       .single();
     setProfile(profileData || null);
+
+    // Paid for, but not yet handed over by the location owner.
+    const { data: ticketData } = await supabase
+      .from('pending_tickets')
+      .select('ticket_code, duration_hours, initial_payment, created_at, locations(name)')
+      .eq('customer_id', userId)
+      .eq('used', false)
+      .order('created_at', { ascending: false })
+      .limit(5);
+    setTickets((ticketData as unknown as UnusedTicket[]) || []);
 
     const { data: activeData } = await supabase
       .from('rentals')
@@ -77,11 +96,21 @@ export default function CustomerDashboard() {
       .limit(15);
     setPastRentals(historyData || []);
 
-    setLoading(false);
+    if (!silent) setLoading(false);
   }
 
   useEffect(() => {
     if (!checkingAuth && user) loadAll(user.id);
+  }, [checkingAuth, user]);
+
+  // While the page is open, quietly refresh every 20 seconds so the ticket turns
+  // into an active rental as soon as the owner confirms the handover.
+  useEffect(() => {
+    if (checkingAuth || !user) return;
+    const id = setInterval(() => {
+      if (document.visibilityState === 'visible') loadAll(user.id, true);
+    }, 20000);
+    return () => clearInterval(id);
   }, [checkingAuth, user]);
 
   function formatCountdown(expectedReturn: string, status: string, lateFee: number): { text: string; isOverdue: boolean } {
@@ -115,7 +144,31 @@ export default function CustomerDashboard() {
         <p className="text-gray-500 text-sm">{profile?.phone}</p>
       </div>
 
-      {/* Account standing — the main thing this page exists to show */}
+      {/* Ticket(s) the customer has paid for but not yet collected */}
+      {tickets.length > 0 && (
+        <div className="bg-blue-50 border-2 border-blue-600 rounded-2xl shadow-xl p-6 space-y-4">
+          <div className="text-center">
+            <p className="text-xs font-bold text-blue-700 uppercase">
+              {tickets.length === 1 ? 'Your Ticket' : `Your Tickets (${tickets.length})`}
+            </p>
+            <p className="text-sm text-gray-600 mt-1">
+              Show this code to the location owner to collect your powerbank.
+            </p>
+          </div>
+
+          {tickets.map((t) => (
+            <div key={t.ticket_code} className="bg-white rounded-xl p-4 text-center space-y-1">
+              <p className="text-4xl font-extrabold tracking-widest text-blue-600">{t.ticket_code}</p>
+              <p className="text-xs text-gray-500">
+                {t.locations?.name || 'Partner location'} · {t.duration_hours}h · ₦{t.initial_payment}
+              </p>
+              <p className="text-xs text-gray-400">Paid {new Date(t.created_at).toLocaleString()}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Account standing */}
       {profile?.is_suspended ? (
         <div className="bg-red-50 border-2 border-red-200 rounded-2xl shadow-xl p-6 text-center space-y-3">
           <p className="text-red-700 font-bold">⚠ Account Suspended</p>
@@ -128,8 +181,7 @@ export default function CustomerDashboard() {
               ₦{(profile?.outstanding_debt || 0).toLocaleString()}
             </p>
           </div>
-          
-                      <a href="/account" className="inline-block w-full bg-red-600 text-white font-bold py-3 rounded-xl">Pay Now to Restore Account</a>
+          <a href="/account" className="inline-block w-full bg-red-600 text-white font-bold py-3 rounded-xl">Pay Now to Restore Account</a>
         </div>
       ) : (
         <div className="bg-green-50 border-2 border-green-200 rounded-2xl shadow-xl p-6 text-center">
