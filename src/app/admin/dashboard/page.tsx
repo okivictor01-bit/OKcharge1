@@ -43,9 +43,11 @@ export default function AdminDashboard() {
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [originalCode, setOriginalCode] = useState('');
   const [formName, setFormName] = useState('');
   const [formAddress, setFormAddress] = useState('');
   const [formOwnerPhone, setFormOwnerPhone] = useState('');
+  const [formCode, setFormCode] = useState('');
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
 
@@ -104,18 +106,22 @@ export default function AdminDashboard() {
 
   function openCreateForm(prefillPhone?: string) {
     setEditingId(null);
+    setOriginalCode('');
     setFormName('');
     setFormAddress('');
     setFormOwnerPhone(prefillPhone || '');
+    setFormCode('');
     setFormError('');
     setShowForm(true);
   }
 
   function openEditForm(loc: Location) {
     setEditingId(loc.id);
+    setOriginalCode(loc.location_qr_code);
     setFormName(loc.name);
     setFormAddress(loc.address || '');
     setFormOwnerPhone(loc.users?.phone || '');
+    setFormCode(loc.location_qr_code);
     setFormError('');
     setShowForm(true);
   }
@@ -128,6 +134,10 @@ export default function AdminDashboard() {
     }
     if (!formOwnerPhone.trim()) {
       setFormError('Owner phone number is required.');
+      return;
+    }
+    if (editingId && !formCode.trim()) {
+      setFormError('Location code cannot be empty.');
       return;
     }
 
@@ -146,8 +156,8 @@ export default function AdminDashboard() {
     const normalizedPhone = toE164(formOwnerPhone.trim());
 
     const body = editingId
-      ? { action: 'update', location_id: editingId, name: formName, address: formAddress, owner_phone: normalizedPhone }
-      : { action: 'create', name: formName, address: formAddress, owner_phone: normalizedPhone };
+      ? { action: 'update', location_id: editingId, name: formName, address: formAddress, owner_phone: normalizedPhone, location_code: formCode }
+      : { action: 'create', name: formName, address: formAddress, owner_phone: normalizedPhone, location_code: formCode };
 
     const { data, error } = await supabase.functions.invoke('admin-locations', {
       body,
@@ -185,6 +195,8 @@ export default function AdminDashboard() {
     if (hrs < 24) return `${hrs}h ago`;
     return `${Math.floor(hrs / 24)}d ago`;
   }
+
+  const codeChanged = !!editingId && formCode.trim().toUpperCase() !== originalCode;
 
   if (checkingAuth) {
     return (
@@ -288,8 +300,8 @@ export default function AdminDashboard() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-6 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md space-y-4">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-6 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md space-y-4 my-auto">
             <h3 className="font-bold text-gray-800">
               {editingId ? 'Edit Location' : 'New Location'}
             </h3>
@@ -326,6 +338,31 @@ export default function AdminDashboard() {
               <p className="text-xs text-gray-400 mt-1">
                 The owner must already have an account (signed up via the customer login page).
               </p>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">
+                Location Code
+              </label>
+              <input
+                type="text"
+                placeholder={editingId ? '' : "Leave blank to use the owner's first name"}
+                value={formCode}
+                onChange={(e) => setFormCode(e.target.value.toUpperCase())}
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 outline-none font-mono tracking-wide"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Letters, numbers and hyphens only (3 to 30 characters). Customers scan a link ending in this code.
+              </p>
+              {formCode.trim() && (
+                <p className="text-xs text-gray-500 mt-1 break-all">
+                  okcharge.site/?location={formCode.trim()}
+                </p>
+              )}
+              {codeChanged && (
+                <p className="text-xs text-orange-700 font-bold mt-2">
+                  Changing the code stops already-printed QR codes for this location from working. Reprint them after saving.
+                </p>
+              )}
             </div>
 
             {formError && <p className="text-sm text-red-600 font-medium">{formError}</p>}
