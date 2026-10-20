@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import ServiceWorkerRegister from './components/ServiceWorkerRegister'
+import DomainRedirect from './components/DomainRedirect'
 
 export const metadata: Metadata = {
   title: 'OKcharge - Powerbank Rental',
@@ -34,6 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <DomainRedirect />
         <ServiceWorkerRegister />
         <Header />
         {children}
