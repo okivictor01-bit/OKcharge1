@@ -63,7 +63,7 @@ export default function RentalForm() {
     supabase
       .from('locations')
       .select('id, name, address, is_active')
-      .eq('location_qr_code', locationCode)
+            .eq('location_qr_code', locationCode.toUpperCase())
       .eq('is_active', true)
       .maybeSingle()
       .then(({ data, error }) => {
