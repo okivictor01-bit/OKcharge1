@@ -19,7 +19,7 @@ interface Powerbank {
   status: string;
 }
 
-const SITE_URL = 'https://okcharge1.pages.dev';
+const SITE_URL = 'https://okcharge.site';
 
 export default function QrCodesContent() {
   const router = useRouter();
