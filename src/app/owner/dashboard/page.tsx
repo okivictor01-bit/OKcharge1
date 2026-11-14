@@ -91,17 +91,21 @@ export default function OwnerDashboard() {
     // RLS already restricts this to only rentals at locations this owner actually owns.
     const { data, error } = await supabase
       .from('rentals')
-      .select('initial_payment')
+      .select('initial_payment, owner_rental_pct')
       .gte('start_time', start)
       .lte('start_time', end);
 
     setLoadingEarnings(false);
     if (error || !data) return;
 
-    const totalPayments = data.reduce((sum, r) => sum + Number(r.initial_payment || 0), 0);
+    // Each rental is counted at the owner's share it was actually paid under.
+    const total = data.reduce(
+      (sum, r) => sum + Number(r.initial_payment || 0) * Number(r.owner_rental_pct ?? 0.5),
+      0
+    );
     setTodayEarnings({
       totalRentals: data.length,
-      totalEarnings: totalPayments * 0.5,
+      totalEarnings: Math.round(total * 100) / 100,
     });
   }
 
