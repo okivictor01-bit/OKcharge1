@@ -17,9 +17,7 @@ export default function LandingPage() {
           <p className="text-sm text-gray-200 drop-shadow">
             Rent a fully charged powerbank at partner locations near you — no app download required.
           </p>
-          <a href="/login" className="inline-block bg-white text-blue-600 font-bold px-6 py-3 rounded-xl mt-2">
-            Sign Up / Log In
-          </a>
+          <a href="/login" className="inline-block bg-white text-blue-600 font-bold px-6 py-3 rounded-xl mt-2">Sign Up / Log In</a>
         </div>
       </div>
 
@@ -39,7 +37,7 @@ export default function LandingPage() {
             <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center shrink-0">2</div>
             <div>
               <p className="font-bold text-gray-800">Scan a location QR code</p>
-              <p className="text-sm text-gray-500">From your dashboard, or the QR code at any partner location.</p>
+              <p className="text-sm text-gray-500">At any partner location.</p>
             </div>
           </div>
 
@@ -55,7 +53,7 @@ export default function LandingPage() {
         <div className="bg-blue-600 rounded-2xl shadow-xl p-6 text-center space-y-3">
           <p className="text-white font-bold text-lg">Own a shop, cafe, or kiosk?</p>
           <p className="text-blue-100 text-sm">
-            Host OKcharge powerbanks at your location and earn 50% of every rental — no equipment cost to you.
+            Host OKcharge powerbanks at your location and earn 40% of every rental — no equipment cost to you.
           </p>
           <a href="/owner/signup" className="inline-block bg-white text-blue-600 font-bold px-6 py-3 rounded-xl mt-2">Become a Partner</a>
         </div>
