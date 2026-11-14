@@ -9,10 +9,16 @@ interface RentalRow {
   status: string;
   duration_hours: number;
   initial_payment: number;
+  owner_rental_pct: number;
 }
 
 function todayISO(): string {
   return new Date().toISOString().split('T')[0];
+}
+
+// The owner's share of one rental, at the rate it was actually paid under.
+function ownerShare(r: RentalRow): number {
+  return Number(r.initial_payment || 0) * Number(r.owner_rental_pct ?? 0.5);
 }
 
 export default function OwnerEarningsPage() {
@@ -55,7 +61,7 @@ export default function OwnerEarningsPage() {
     // RLS already restricts this to only rentals at locations this owner actually owns.
     const { data, error: queryError } = await supabase
       .from('rentals')
-      .select('id, start_time, status, duration_hours, initial_payment')
+      .select('id, start_time, status, duration_hours, initial_payment, owner_rental_pct')
       .gte('start_time', start)
       .lte('start_time', end)
       .order('start_time', { ascending: false });
@@ -95,10 +101,10 @@ export default function OwnerEarningsPage() {
   }
 
   function formatNaira(n: number): string {
-    return `₦${n.toLocaleString('en-NG', { minimumFractionDigits: 0 })}`;
+    return `₦${n.toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
   }
 
-  const totalEarnings = rentals.reduce((sum, r) => sum + Number(r.initial_payment || 0), 0) * 0.5;
+  const totalEarnings = rentals.reduce((sum, r) => sum + ownerShare(r), 0);
 
   if (checkingAuth) {
     return (
@@ -191,7 +197,8 @@ export default function OwnerEarningsPage() {
             <div className="flex justify-between text-gray-500 text-xs">
               <span>{new Date(r.start_time).toLocaleString()}</span>
               <span className="font-bold text-green-600">
-                +{formatNaira(Number(r.initial_payment || 0) * 0.5)}
+                +{formatNaira(ownerShare(r))}
+                <span className="font-normal text-gray-400"> ({Math.round(Number(r.owner_rental_pct ?? 0.5) * 100)}% share)</span>
               </span>
             </div>
           </div>
