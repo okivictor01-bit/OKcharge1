@@ -75,7 +75,7 @@ export default function OwnerSignupPage() {
           <h1 className="text-3xl font-extrabold text-blue-600 mb-2">OKcharge</h1>
           <p className="text-gray-500 font-medium">Become a Partner</p>
           <p className="text-xs text-gray-400 mt-1">
-            Host OKcharge powerbanks at your location and earn 50% of every rental.
+            Host OKcharge powerbanks at your location and earn 40% of every rental.
           </p>
         </div>
 
