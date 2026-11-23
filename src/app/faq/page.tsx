@@ -2,19 +2,19 @@ export default function FaqPage() {
   const faqs = [
     {
       q: 'How do I rent a powerbank?',
-      a: 'Scan the OKcharge QR code at any partner location, choose a duration (1, 3, 5, or 24 hours), pay, and show your ticket code to the location owner to collect a fully charged powerbank.',
+      a: 'Scan the OKcharge QR code at any partner location, pay ₦700, and show your ticket code to the location owner to collect a fully charged powerbank.',
     },
     {
-      q: 'How much does it cost?',
-      a: '1 hour: ₦100. 3 hours: ₦250. 5 hours: ₦400. 24 hours: ₦900.',
+      q: 'How much does it cost, and how long can I keep it?',
+      a: 'A rental costs a flat ₦700 and lets you keep the powerbank for up to 24 hours from the moment the location owner hands it to you.',
     },
     {
       q: 'What if I return it late?',
-      a: 'There is no late fee in the first hour after your rental ends. After that, ₦100 is charged for every full hour you are late, up to a maximum of ₦2,000. This is charged automatically to your saved card, or added to your account balance if the charge fails.',
+      a: 'There is no late fee in the first hour after your 24 hours end. After that, ₦100 is charged for every full hour you are late, up to a maximum of ₦2,000. This is charged automatically to your saved card, or added to your account balance if the charge fails.',
     },
     {
       q: "What happens if I don't return the powerbank at all?",
-      a: 'If a powerbank is not returned within 7 days of the rental expiring, it is treated as lost or stolen and a flat replacement fee of ₦15,000 is charged.',
+      a: 'If a powerbank is not returned within 7 days after your 24 hours end, it is treated as lost or stolen and a flat replacement fee of ₦15,000 is charged.',
     },
     {
       q: 'Why do I need to pay by card for my first rental?',
