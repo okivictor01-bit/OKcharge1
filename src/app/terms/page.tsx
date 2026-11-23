@@ -19,7 +19,7 @@ const SECTIONS: Section[] = [
     title: `1. About OKcharge`,
     blocks: [
       { type: 'p', text: `OKcharge provides portable power-bank rental services through participating OKcharge locations.` },
-      { type: 'p', text: `Customers may rent an OKcharge power bank for a selected rental period and return it to an eligible OKcharge location.` },
+      { type: 'p', text: `Customers may rent an OKcharge power bank for a rental period of up to 24 hours and return it to an eligible OKcharge location.` },
       { type: 'p', text: `OKcharge locations may be operated by independent business partners. These partners provide the physical location and may assist with handing out and receiving power banks but are not employees of OKcharge.` },
     ],
   },
@@ -42,13 +42,14 @@ const SECTIONS: Section[] = [
     ],
   },
   {
-    title: `3. Rental Periods`,
+    title: `3. Rental Fee and Rental Period`,
     blocks: [
-      { type: 'p', text: `Available rental periods may include:` },
-      { type: 'ul', items: [`1 hour`, `3 hours`, `5 hours`, `24 hours`] },
-      { type: 'p', text: `The rental period begins when the power bank is handed over to the customer or otherwise marked as rented in the OKcharge system.` },
+      { type: 'p', text: `Each rental is charged at a flat fee of:` },
+      { type: 'strong', text: `₦700 per rental` },
+      { type: 'p', text: `This fee allows you to keep the power bank for up to 24 hours.` },
+      { type: 'p', text: `The rental period begins when the power bank is handed over to the customer or otherwise marked as rented in the OKcharge system, and ends 24 hours later.` },
       { type: 'p', text: `The customer is responsible for the power bank from the time of handover until the power bank is successfully returned and the return has been recorded by OKcharge or an authorized OKcharge location.` },
-      { type: 'p', text: `The customer must return the power bank within the selected rental period.` },
+      { type: 'p', text: `The customer must return the power bank within the 24-hour rental period.` },
     ],
   },
   {
@@ -78,13 +79,13 @@ const SECTIONS: Section[] = [
   {
     title: `6. Late Return Fees`,
     blocks: [
-      { type: 'p', text: `If a power bank is not returned when the selected rental period expires, the rental is marked overdue. Late-return fees are charged per completed hour: no fee applies until one full hour has passed after the rental period expires.` },
+      { type: 'p', text: `If a power bank is not returned when the 24-hour rental period ends, the rental is marked overdue. Late-return fees are charged per completed hour: no fee applies until one full hour has passed after the 24-hour rental period ends.` },
       { type: 'p', text: `The late-return fee is:` },
       { type: 'strong', text: `₦100 per completed hour` },
       { type: 'p', text: `subject to a maximum late-return fee of:` },
       { type: 'strong', text: `₦2,000 per rental.` },
       { type: 'h3', text: `Example` },
-      { type: 'p', text: `If your rental expires at 7:00 PM and you return the power bank at 9:30 PM, you are 2 completed hours late (the extra half hour is not charged):` },
+      { type: 'p', text: `If your 24-hour rental period ends at 7:00 PM and you return the power bank at 9:30 PM, you are 2 completed hours late (the extra half hour is not charged):` },
       { type: 'strong', text: `2 hours × ₦100 = ₦200 late fee.` },
       { type: 'p', text: `If the accumulated late fee reaches ₦2,000, no additional late-return fee will be charged beyond that maximum.` },
       { type: 'p', text: `Where applicable, the accumulated late fee may be charged to the payment authorization associated with your account.` },
@@ -93,7 +94,7 @@ const SECTIONS: Section[] = [
   {
     title: `7. Power Banks Not Returned Within Seven Days`,
     blocks: [
-      { type: 'p', text: `If a power bank remains unreturned for seven (7) days after the selected rental period expires, OKcharge may classify the power bank as lost or unreturned equipment.` },
+      { type: 'p', text: `If a power bank remains unreturned for seven (7) days after the 24-hour rental period ends, OKcharge may classify the power bank as lost or unreturned equipment.` },
       { type: 'p', text: `A replacement charge of:` },
       { type: 'strong', text: `₦15,000` },
       { type: 'p', text: `will then be charged to the customer's authorized payment method or recorded as an outstanding balance on the customer's OKcharge account.` },
@@ -101,7 +102,7 @@ const SECTIONS: Section[] = [
       { type: 'p', text: `This ₦15,000 replacement charge is the total amount payable for an unreturned power bank. It replaces, and is not added to, any late-return fees accumulated on that rental.` },
       { type: 'p', text: `OKcharge may also take reasonable steps to recover its equipment or outstanding amounts where appropriate and lawful.` },
       { type: 'h3', text: `Important` },
-      { type: 'p', text: `The seven-day period does not cancel the customer's responsibility to return the power bank. Customers should return the power bank as soon as possible after the rental period expires.` },
+      { type: 'p', text: `The seven-day period does not cancel the customer's responsibility to return the power bank. Customers should return the power bank as soon as possible after the rental period ends.` },
     ],
   },
   {
@@ -323,7 +324,7 @@ export default function TermsPage() {
 
       <div className="text-center">
         <h1 className="text-3xl font-extrabold text-gray-800">OKcharge Terms &amp; Conditions</h1>
-        <p className="text-xs text-gray-400 mt-1">Last Updated: September 2026</p>
+        <p className="text-xs text-gray-400 mt-1">Last Updated: November 2026</p>
       </div>
 
       <div className="bg-white rounded-2xl shadow-xl p-6 space-y-6 text-gray-600 leading-relaxed text-sm">
