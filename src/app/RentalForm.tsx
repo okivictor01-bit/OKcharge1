@@ -13,8 +13,8 @@ interface Location {
   is_active: boolean;
 }
 
-// CUSTOMIZE: duration options for this client's rentals
-const DURATIONS = [1, 3, 5, 24];
+// Display only. The real price is set on the server in initialize-payment.
+const RENTAL_PRICE = 700;
 
 export default function RentalForm() {
   const router = useRouter();
@@ -28,7 +28,6 @@ export default function RentalForm() {
   const [loadingLocation, setLoadingLocation] = useState(true);
   const [locationError, setLocationError] = useState('');
 
-  const [duration, setDuration] = useState(DURATIONS[0]);
   const [name, setName] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -47,7 +46,7 @@ export default function RentalForm() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // No location scanned, but the person is already logged in — send them to their
+  // No location scanned, but the person is already logged in: send them to their
   // own dashboard instead of the marketing page meant for new/anonymous visitors.
   useEffect(() => {
     if (!checkingAuth && !locationCode && user) {
@@ -63,7 +62,7 @@ export default function RentalForm() {
     supabase
       .from('locations')
       .select('id, name, address, is_active')
-            .eq('location_qr_code', locationCode.toUpperCase())
+      .eq('location_qr_code', locationCode.toUpperCase())
       .eq('is_active', true)
       .maybeSingle()
       .then(({ data, error }) => {
@@ -103,7 +102,6 @@ export default function RentalForm() {
     const { data, error } = await supabase.functions.invoke('initialize-payment', {
       body: {
         location_id: location.id,
-        duration_hours: duration,
         customer_name: name.trim(),
       },
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -174,23 +172,12 @@ export default function RentalForm() {
           </p>
         )}
 
-        <div className="space-y-4">
-          <label className="block text-sm font-bold text-gray-700">Select Duration</label>
-          <div className="grid grid-cols-2 gap-3">
-            {DURATIONS.map((hours) => (
-              <button
-                key={hours}
-                onClick={() => setDuration(hours)}
-                className={`py-3 rounded-xl border-2 font-bold transition-all ${
-                  duration === hours
-                    ? 'border-blue-600 bg-blue-50 text-blue-600'
-                    : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                }`}
-              >
-                {hours} {hours === 1 ? 'Hour' : 'Hours'}
-              </button>
-            ))}
-          </div>
+        <div className="border-2 border-blue-600 bg-blue-50 rounded-xl p-5 text-center space-y-1">
+          <p className="text-xs font-bold text-blue-700 uppercase">One simple rate</p>
+          <p className="text-4xl font-extrabold text-blue-600">₦{RENTAL_PRICE}</p>
+          <p className="text-sm text-gray-600">
+            A fully charged powerbank. Keep it for up to 24 hours.
+          </p>
         </div>
 
         <div className="space-y-2">
@@ -210,7 +197,6 @@ export default function RentalForm() {
           </p>
         )}
 
-        {/* CUSTOMIZE: fee amounts here must match process-return / hourly-escalation exactly */}
         <div className="border-2 border-blue-200 bg-blue-50 rounded-xl p-4 space-y-2">
           <p className="text-sm font-bold text-blue-800">Card Required for Your First Rental</p>
           <p className="text-xs text-blue-700 leading-relaxed">
@@ -219,9 +205,10 @@ export default function RentalForm() {
             applicable fees under our Terms &amp; Conditions.
           </p>
           <ul className="text-xs text-blue-700 leading-relaxed list-disc pl-4 space-y-0.5">
-            <li>Late return: ₦100/hour after a 1-hour grace period</li>
+            <li>Return the powerbank within 24 hours of collecting it</li>
+            <li>Late return: ₦100 for each full hour after a 1-hour grace period</li>
             <li>Maximum late fee: ₦2,000</li>
-            <li>Not returned 7 days after rental expiry: ₦15,000 replacement charge</li>
+            <li>Not returned 7 days after your 24 hours end: ₦15,000 replacement charge</li>
           </ul>
           <label className="flex items-start gap-2 pt-1 cursor-pointer">
             <input
@@ -241,7 +228,7 @@ export default function RentalForm() {
           disabled={submitting || (!!user && !agreed)}
           className="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-xl mt-4 hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-500/30 disabled:opacity-50"
         >
-          {submitting ? 'Please wait…' : user ? 'Pay & Rent Now' : 'Continue to Login'}
+          {submitting ? 'Please wait…' : user ? `Pay ₦${RENTAL_PRICE} & Rent Now` : 'Continue to Login'}
         </button>
 
         {payError && (
