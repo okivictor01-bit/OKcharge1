@@ -20,6 +20,14 @@ interface PendingOwner {
   phone: string;
   name: string | null;
   created_at: string;
+  proposed_location_name: string | null;
+  proposed_location_address: string | null;
+}
+
+interface CreatePrefill {
+  phone?: string;
+  name?: string;
+  address?: string;
 }
 
 function toE164(rawPhone: string): string {
@@ -104,12 +112,12 @@ export default function AdminDashboard() {
     }
   }, [checkingAuth]);
 
-  function openCreateForm(prefillPhone?: string) {
+  function openCreateForm(prefill?: CreatePrefill) {
     setEditingId(null);
     setOriginalCode('');
-    setFormName('');
-    setFormAddress('');
-    setFormOwnerPhone(prefillPhone || '');
+    setFormName(prefill?.name || '');
+    setFormAddress(prefill?.address || '');
+    setFormOwnerPhone(prefill?.phone || '');
     setFormCode('');
     setFormError('');
     setShowForm(true);
@@ -232,17 +240,28 @@ export default function AdminDashboard() {
             <h2 className="font-bold text-yellow-800">⚠ Pending Partners ({pendingOwners.length})</h2>
           </div>
           <p className="text-xs text-yellow-700">
-            These partners have signed up but have no location set up yet.
+            These partners have signed up but have no location set up yet. Tap Set Up Location to create theirs with the details they gave.
           </p>
           <div className="space-y-2">
             {pendingOwners.map((owner) => (
-              <div key={owner.id} className="bg-white rounded-xl p-3 flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-gray-800">{owner.name || 'No name provided'}</p>
-                  <p className="text-xs text-gray-500">{owner.phone} · {formatWaiting(owner.created_at)}</p>
+              <div key={owner.id} className="bg-white rounded-xl p-3 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-bold text-gray-800">
+                    {owner.proposed_location_name || owner.name || 'No name provided'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {owner.proposed_location_address || 'No address provided'}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {owner.name || 'No name'} · {owner.phone} · {formatWaiting(owner.created_at)}
+                  </p>
                 </div>
                 <button
-                  onClick={() => openCreateForm(owner.phone)}
+                  onClick={() => openCreateForm({
+                    phone: owner.phone,
+                    name: owner.proposed_location_name || '',
+                    address: owner.proposed_location_address || '',
+                  })}
                   className="text-sm font-bold text-white bg-yellow-600 px-3 py-2 rounded-lg shrink-0"
                 >
                   Set Up Location
