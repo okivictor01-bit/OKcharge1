@@ -14,6 +14,8 @@ export default function OwnerSignupPage() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [locationAddress, setLocationAddress] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -26,6 +28,14 @@ export default function OwnerSignupPage() {
     }
     if (phone.replace(/\D/g, '').length < 10) {
       setError('Enter a valid phone number.');
+      return;
+    }
+    if (!businessName.trim()) {
+      setError('Please enter the name of your shop or business.');
+      return;
+    }
+    if (locationAddress.trim().length < 5) {
+      setError('Please enter the full address of the location.');
       return;
     }
     if (password.length < 6) {
@@ -54,7 +64,14 @@ export default function OwnerSignupPage() {
     const { error: upsertError } = await supabase
       .from('users')
       .upsert(
-        { id: data.user.id, phone: e164Phone, name: name.trim(), role: 'owner' },
+        {
+          id: data.user.id,
+          phone: e164Phone,
+          name: name.trim(),
+          role: 'owner',
+          proposed_location_name: businessName.trim(),
+          proposed_location_address: locationAddress.trim(),
+        },
         { onConflict: 'id' }
       );
 
@@ -81,7 +98,7 @@ export default function OwnerSignupPage() {
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">Full Name</label>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Your Full Name</label>
             <input
               type="text"
               placeholder="e.g. Ada Obi"
@@ -99,6 +116,29 @@ export default function OwnerSignupPage() {
               onChange={(e) => setPhone(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-600 outline-none text-lg"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Shop / Business Name</label>
+            <input
+              type="text"
+              placeholder="e.g. Ada's Provision Store"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-600 outline-none text-lg"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Location Address</label>
+            <input
+              type="text"
+              placeholder="Where the powerbanks will be kept"
+              value={locationAddress}
+              onChange={(e) => setLocationAddress(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-600 outline-none text-lg"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Include the street, area and town so customers can find you.
+            </p>
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-1">Password</label>
